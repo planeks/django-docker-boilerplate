@@ -1,0 +1,88 @@
+version: '3.4'
+
+x-django: &django
+  build:
+    context: .
+    dockerfile: ./compose/production/django/Dockerfile
+  restart: always
+  depends_on:
+    - postgres
+    - redis
+  volumes:
+    - ./src:/app:cached
+    - ./data/production_staticfiles:/staticfiles:z
+    - ./data/production_sessions:/sessions:z
+    - ./data/production_extras:/extras:z
+  env_file:
+    - ./.env
+
+services:
+  django:
+    <<: *django
+    image: {{project_name}}_production_django
+    command: /start
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web-router.rule=Host(`example.com`)"
+      - "traefik.http.routers.web-router.entrypoints=web"
+      - "traefik.http.routers.web-router.middlewares=redirect,csrf"
+      - "traefik.http.routers.web-router.service=django"
+      - "traefik.http.routers.web-secure-router.rule=Host(`example.com`)"
+      - "traefik.http.routers.web-secure-router.entrypoints=web-secure"
+      - "traefik.http.routers.web-secure-router.middlewares=csrf"
+      - "traefik.http.routers.web-secure-router.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web-secure-router.service=django"
+      - "traefik.http.services.django.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.csrf.headers.hostsproxyheaders=X-Script-Name"
+  celeryworker:
+    <<: *django
+    image: {{project_name}}_production_celeryworker
+    command: /start-celeryworker
+    labels: {}
+  celerybeat:
+    <<: *django
+    image: cronsy_production_celerybeat
+    command: /start-celerybeat
+    labels: {}
+  flower:
+    <<: *django
+    image: {{project_name}}_production_flower
+    command: /start-flower
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flower-secure-router.rule=Host(`example.com`)"
+      - "traefik.http.routers.flower-secure-router.entrypoints=flower"
+      - "traefik.http.routers.flower-secure-router.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.flower-secure-router.service=flower"
+      - "traefik.http.services.flower.loadbalancer.server.port=5555"
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: {{project_name}}_production_postgres
+    restart: always
+    volumes:
+      - ./data/production_postgres_data:/var/lib/postgresql/data:Z
+      - ./data/production_postgres_data_backups:/backups:z
+    env_file:
+      - ./.env
+  redis:
+    image: redis:6.0
+    restart: always
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/production/traefik/Dockerfile
+    image: {{project_name}}_production_traefik
+    restart: always
+    depends_on:
+      - django
+    volumes:
+      - ./data/production_traefik:/etc/traefik/acme:z
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+      - "0.0.0.0:5555:5555"

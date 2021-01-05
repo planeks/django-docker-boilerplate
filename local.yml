@@ -1,0 +1,32 @@
+version: '3.4'
+
+x-django: &django
+  build:
+    context: .
+    dockerfile: ./compose/local/django/Dockerfile
+  image: {{project_name}}_local
+  depends_on:
+    - redis
+  volumes:
+    - ./src:/app:cached
+    - ./data/local_staticfiles:/staticfiles:z
+    - ./data/local_sessions:/sessions:z
+    - ./data/local_extras:/extras:z
+    - ./data/local_email:/email:z
+  env_file:
+    - ./.env
+
+services:
+  django:
+    <<: *django
+    ports:
+      - "8000:8000"
+    command: /start
+  celeryworker:
+    <<: *django
+    command: /start-celeryworker
+  celerybeat:
+    <<: *django
+    command: /start-celerybeat
+  redis:
+    image: redis:6.0

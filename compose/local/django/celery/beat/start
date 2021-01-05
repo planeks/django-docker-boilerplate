@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+
+rm -f '/extras/celerybeat.pid'
+celery -A cronsy beat -s /extras/celerybeat-schedule --loglevel=INFO --pidfile="/extras/celerybeat.pid"

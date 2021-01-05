@@ -1,0 +1,25 @@
+log:
+  level: DEBUG
+
+entryPoints:
+  web:
+    address: ":80"
+
+  web-secure:
+    address: ":443"
+
+  flower:
+    address: ":5555"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "inbox@saasband.com"
+      storage: /etc/traefik/acme/acme.json
+      httpChallenge:
+        entryPoint: web
+
+providers:
+  docker:
+    exposedByDefault: false
+    watch: true
