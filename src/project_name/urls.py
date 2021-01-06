@@ -8,7 +8,6 @@ admin.site.enable_nav_sidebar = False
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('apps.accounts.urls')),
     path('', include('apps.core.urls')),
 ]
 # For debug mode only

@@ -5,4 +5,4 @@ set -o pipefail
 set -o nounset
 
 
-celery -A cronsy beat -s /extras/celerybeat-schedule --loglevel=INFO --pidfile="/extras/celerybeat.pid"
+celery -A {{project_name}} beat -s /extras/celerybeat-schedule --loglevel=INFO --pidfile="/extras/celerybeat.pid"

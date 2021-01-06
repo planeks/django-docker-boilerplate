@@ -8,5 +8,5 @@ set -o nounset
 python /app/manage.py collectstatic --noinput
 python /app/manage.py migrate
 
-# /usr/local/bin/gunicorn cronsy.asgi --bind 0.0.0.0:8000 --chdir=/app -k uvicorn.workers.UvicornWorker
-/usr/local/bin/gunicorn cronsy.wsgi --bind 0.0.0.0:8000 --chdir=/app
+# /usr/local/bin/gunicorn {{project_name}}.asgi --bind 0.0.0.0:8000 --chdir=/app -k uvicorn.workers.UvicornWorker
+/usr/local/bin/gunicorn {{project_name}}.wsgi --bind 0.0.0.0:8000 --chdir=/app

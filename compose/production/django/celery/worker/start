@@ -5,4 +5,4 @@ set -o pipefail
 set -o nounset
 
 
-celery -A cronsy worker -l INFO
+celery -A {{project_name}} worker -l INFO

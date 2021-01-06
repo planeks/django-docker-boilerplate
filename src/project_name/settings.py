@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django_extensions',
 
     # Add the apps here
+    'apps.core',
 ]
 
 if CONFIGURATION == 'dev':
@@ -117,7 +118,7 @@ TEMPLATES = [
 WSGI_APPLICATION = f'{PROJECT_NAME}.wsgi.application'
 
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'auth.User'
 AUTH_PASSWORD_VALIDATORS = []
 
 
@@ -196,12 +197,12 @@ elif CONFIGURATION == 'prod':
         }
     }
 
-    # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    # EMAIL_HOST = config('EMAIL_HOST')
-    # EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
-    # EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-    # EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-    # EMAIL_USE_SSL = config('EMAIL_USE_SSL', default='0', cast=bool)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = config('EMAIL_HOST', default='')
+    EMAIL_PORT = config('EMAIL_PORT', default=25, cast=int)
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    EMAIL_USE_SSL = config('EMAIL_USE_SSL', default='0', cast=bool)
     CACHES = {
         'default': {
             'BACKEND': 'redis_cache.RedisCache',

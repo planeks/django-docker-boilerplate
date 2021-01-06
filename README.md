@@ -1,2 +1,1 @@
-# {{ project_name }}
-
+# Django Docker Boilerplate from PLANEKS
