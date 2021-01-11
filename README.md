@@ -226,6 +226,72 @@ volumes:
 $ source ./init_production_volumes.sh
 ```
 
+Then you need to create the `.env` file with proper settings. You can use or template
+for creating it:
+
+```shell
+$ cp production.env .env
+```
+
+Open the .env file in your editor and specify the settings:
+
+```shell
+PYTHONENCODING=utf8
+DEBUG=0
+CONFIGURATION=prod
+DJANGO_LOG_LEVEL=INFO
+SECRET_KEY="<secret_key>"
+ALLOWED_HOSTS=example.com
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=my_project
+POSTGRES_USER=my_project
+POSTGRES_PASSWORD=<db_password>
+REDIS_URL=redis://redis:6379/0
+STATIC_ROOT=/staticfiles
+SESSION_FILE_PATH=/sessions
+SITE_URL=https://example.com
+EMAIL_HOST=
+EMAIL_PORT=25
+EMAIL_HOST_USER=<email_user>
+EMAIL_HOST_PASSWORD=<email_password>
+SENTRY_DSN=<sentry_dsn>
+CELERY_FLOWER_USER=<flower_user>
+CELERY_FLOWER_PASSWORD=<flower_password>
+```
+
+Cheange the necessary settings. Please check the `ALLOWED_HOSTS` settings that should
+contain the correct domain name.
+
+After that, open the file `production.yml` and change the Traefik rules for the
+`django` and `flower` containers for correct work with your domain.
+
+For example, check the `labels` section here:
+
+```yml
+  django:
+    <<: *django
+    image: {{project_name}}_production_django
+    command: /start
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web-router.rule=Host(`example.com`)"
+      - "traefik.http.routers.web-router.entrypoints=web"
+      - "traefik.http.routers.web-router.middlewares=redirect,csrf"
+      - "traefik.http.routers.web-router.service=django"
+      - "traefik.http.routers.web-secure-router.rule=Host(`example.com`)"
+      - "traefik.http.routers.web-secure-router.entrypoints=web-secure"
+      - "traefik.http.routers.web-secure-router.middlewares=csrf"
+      - "traefik.http.routers.web-secure-router.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.web-secure-router.service=django"
+      - "traefik.http.services.django.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.csrf.headers.hostsproxyheaders=X-Script-Name"
+```
+
+Find the all `Host(...)` directives and replace the `example.com` with your domain.
+
 Now you can run the containers:
 
 ```bash
