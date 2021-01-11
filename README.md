@@ -113,11 +113,11 @@ and select the `Add...` item.
 Select `Docker Compose`  and specify your configuration file (`local.yml`) and
 the particular service.
 
-![Add Python Interpreter](https://cln.sh/0ukTPzbbaKLBrxl248V7)
+![Add Python Interpreter](docs/add-remote-interpreter.jpg)
 
 You can also later change the name of the interpreter for better readability.
 
-![Configure Remote Python Interpreter](https://cln.sh/g50gq36nEt6mSVPmzioq)
+![Configure Remote Python Interpreter](docs/configure-remote-interpreter.jpg)
 
 You need to specify remote interpreters for each of the containers you are working
 with Python. For example, if you have three containers, like `django`, `celeryworker`
@@ -129,7 +129,7 @@ For the running `runserver` you can use standard `Django Server` configuration.
 Specify the proper Python Interpreter, set the `Working directory` to `/app` and set the `Host` option to the `0.0.0.0`.
 It is necessary, because the application server is running inside the container.
 
-![Django Run Configuration](https://cln.sh/N8yoYLPjtr6TQ24P1OFp)
+![Django Run Configuration](docs/django-run-configuration.jpg)
 
 For running Celery you can use `Python` configuration template. Do not forget to
 set the proper remote interpreter and working directory. Also, set the next options:
@@ -140,7 +140,7 @@ set the proper remote interpreter and working directory. Also, set the next opti
 Here we are using `watchgod` utility for automatic restarting the Celery if
 the source code has been changed.
 
-![Celery Run COnfiguration](https://cln.sh/zEmxsIB0NbPdzazEfiXF)
+![Celery Run Configuration](docs/celery-run-configuration.jpg)
 
 Also, create the similar configuration for Celery Beat. Use the next options:
 
@@ -150,7 +150,7 @@ Also, create the similar configuration for Celery Beat. Use the next options:
 Be sure that you specify the proper path for `celerybeat.pid` with proper
 access rights.
 
-![Celery Beat Run Configuration](https://cln.sh/I8GbAYxb5fUNPeqodXc4)
+![Celery Beat Run Configuration](docs/celerybeat-run-configuration.jpg)
 
 ## Deploying the project to the server
 
