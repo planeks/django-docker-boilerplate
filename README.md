@@ -102,6 +102,56 @@ can use the next command for running `bash` inside the container:
 $ docker-compose -f local.yml exec django bash
 ```
 
+## Running the project in PyCharm
+
+> The Docker integration features are available only in the Professional version
+of PyCharm.
+
+Go to the Preferences to the `Project/Python Interpreter`. Click on the gear icon
+and select the `Add...` item.
+
+Select `Docker Compose`  and specify your configuration file (`local.yml`) and
+the particular service.
+
+![Add Python Interpreter](https://cln.sh/0ukTPzbbaKLBrxl248V7)
+
+You can also later change the name of the interpreter for better readability.
+
+![Configure Remote Python Interpreter](https://cln.sh/g50gq36nEt6mSVPmzioq)
+
+You need to specify remote interpreters for each of the containers you are working
+with Python. For example, if you have three containers, like `django`, `celeryworker`
+and `celerybeat`, you need to setup three remote interpreters.
+
+Now you can go to the `Run/Edit Configurations...` and add the particular running configurations.
+
+For the running `runserver` you can use standard `Django Server` configuration.
+Specify the proper Python Interpreter, set the `Working directory` to `/app` and set the `Host` option to the `0.0.0.0`.
+It is necessary, because the application server is running inside the container.
+
+![Django Run Configuration](https://cln.sh/N8yoYLPjtr6TQ24P1OFp)
+
+For running Celery you can use `Python` configuration template. Do not forget to
+set the proper remote interpreter and working directory. Also, set the next options:
+
+- `Script path` : `/usr/local/bin/watchgod`
+- `Parameters` : `celery.__main__.main --args -A cronsy worker --loglevel=info -P solo`
+
+Here we are using `watchgod` utility for automatic restarting the Celery if
+the source code has been changed.
+
+![Celery Run COnfiguration](https://cln.sh/zEmxsIB0NbPdzazEfiXF)
+
+Also, create the similar configuration for Celery Beat. Use the next options:
+
+- `Script path` : `/usr/local/bin/celery`
+- `Parameters` : `-A cronsy beat -s /extras/celerybeat-schedule -l INFO --pidfile="/extras/celerybeat.pid"`
+
+Be sure that you specify the proper path for `celerybeat.pid` with proper
+access rights.
+
+![Celery Beat Run Configuration](https://cln.sh/I8GbAYxb5fUNPeqodXc4)
+
 ## Deploying the project to the server
 
 We are strongly recommend to deploy the project with unpriviledged user instead of `root`.
