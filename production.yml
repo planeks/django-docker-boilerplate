@@ -43,7 +43,7 @@ services:
     labels: {}
   celerybeat:
     <<: *django
-    image: cronsy_production_celerybeat
+    image: {{project_name}}_production_celerybeat
     command: /start-celerybeat
     labels: {}
   flower:

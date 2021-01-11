@@ -135,7 +135,7 @@ For running Celery you can use `Python` configuration template. Do not forget to
 set the proper remote interpreter and working directory. Also, set the next options:
 
 - `Script path` : `/usr/local/bin/watchgod`
-- `Parameters` : `celery.__main__.main --args -A cronsy worker --loglevel=info -P solo`
+- `Parameters` : `celery.__main__.main --args -A my_project worker --loglevel=info -P solo`
 
 Here we are using `watchgod` utility for automatic restarting the Celery if
 the source code has been changed.
@@ -145,7 +145,7 @@ the source code has been changed.
 Also, create the similar configuration for Celery Beat. Use the next options:
 
 - `Script path` : `/usr/local/bin/celery`
-- `Parameters` : `-A cronsy beat -s /extras/celerybeat-schedule -l INFO --pidfile="/extras/celerybeat.pid"`
+- `Parameters` : `-A my_project beat -s /extras/celerybeat-schedule -l INFO --pidfile="/extras/celerybeat.pid"`
 
 Be sure that you specify the proper path for `celerybeat.pid` with proper
 access rights.
@@ -360,5 +360,5 @@ Add the next lines
 
 ```bash
 0 2 * * *       docker system prune -f >> /home/webprod/docker_prune.log 2>&1
-0 1 * * *       cd /home/webprod/projects/my_project && /usr/local/bin/docker-compose -f production.yml exec -T postgres backup >> /home/webprod/cronsy_backup.log 2>&1
+0 1 * * *       cd /home/webprod/projects/my_project && /usr/local/bin/docker-compose -f production.yml exec -T postgres backup >> /home/webprod/my_project_backup.log 2>&1
 ```

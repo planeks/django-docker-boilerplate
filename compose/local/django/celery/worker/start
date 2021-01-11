@@ -4,4 +4,4 @@ set -o errexit
 set -o nounset
 
 
-watchgod celery.__main__.main --args -A cronsy worker -l INFO
+watchgod celery.__main__.main --args -A {{project_name}} worker -l INFO
