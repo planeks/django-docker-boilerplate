@@ -16,7 +16,7 @@ After successful project creation, you may delete `venv` directory and archive, 
 You can use the following commands to install Docker on Ubuntu 20.04:
 
 ```shell
-sudo apt install apt-transport-https ca-certificates curl software-properties-common
+$ sudo apt install apt-transport-https ca-certificates curl software-properties-common
 $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 $ sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
 $ sudo apt update
@@ -334,6 +334,10 @@ For example, check the `labels` section here:
 ```
 
 Find all `Host(...)` directives and replace the `example.com` with your domain.
+
+```bash
+$ sed -i -e 's/Host(`example.com`)/Host(`project.com`)/g' production.yml
+```
 
 Now you can run the containers:
 
