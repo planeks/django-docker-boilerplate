@@ -1,8 +1,0 @@
-#!/bin/bash
-
-set -o errexit
-set -o pipefail
-set -o nounset
-
-
-celery -A {{project_name}} beat -s /extras/celerybeat-schedule --loglevel=INFO --pidfile="/extras/celerybeat.pid"

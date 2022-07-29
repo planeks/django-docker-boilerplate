@@ -1,0 +1,27 @@
+{% extends "accounts/base_profile.html" %}
+{% load i18n static core_tags %}
+
+{% block title %}{% trans "Personal information" %}{% endblock %}
+
+{% block profile_content %}
+<div class="row">
+    <div class="col-md-8">
+        <h3>{% trans "Profile" %}</h3>
+
+        <table class="table table-bordered">
+            <tr>
+                <td>{% trans "Name" %}</td>
+                <td>{{ request.user.name }}</td>
+            </tr>
+            <tr>
+                <td>{% trans "Email" %}</td>
+                <td><a href="mailto:{{ request.user.email }}">{{ request.user.email }}</a></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'edit_personal_information' %}" class="btn btn-secondary">{% trans "Edit profile" %}</a>
+</div>
+{% endblock %}

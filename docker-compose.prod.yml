@@ -1,0 +1,52 @@
+version: '3.8'
+
+x-django: &django
+  build:
+    context: .
+    dockerfile: ./docker/django/Dockerfile
+  restart: always
+  image: {{project_name}}_prod
+  depends_on:
+    - postgres
+    - redis
+  volumes:
+    - ./src:/opt/project/src:cached
+    - ./data/prod:/data:z
+  env_file:
+    - ./.env
+
+services:
+  django:
+    <<: *django
+    command: prod
+  celeryworker:
+    <<: *django
+    command: celery
+  celerybeat:
+    <<: *django
+    command: celery beat -l INFO
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+    image: {{project_name}}_prod_postgres
+    restart: always
+    volumes:
+      - ./data/prod_postgres:/var/lib/postgresql/data:Z
+      - ./data/prod_backups:/backups:z
+    env_file:
+      - ./.env
+  redis:
+    image: redis:6.0
+    restart: always
+  caddy:
+    image: caddy:2.5.2-alpine
+    restart: unless-stopped
+    command: caddy reverse-proxy --from https://example.com:443 --to http://django:8000
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - ./production_caddy:/data
+    depends_on:
+      - django

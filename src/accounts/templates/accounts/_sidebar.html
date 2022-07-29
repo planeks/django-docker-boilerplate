@@ -1,0 +1,6 @@
+{% load i18n %}
+<ul class="nav nav-pills flex-column text-center">
+    <li class="nav-item">
+        <a href="{% url 'personal_information' %}" class="nav-link{% if menu == "personal_information" %} active{% endif %}">{% trans "My profile" %}</a>
+    </li>
+</ul>

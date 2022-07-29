@@ -1,0 +1,64 @@
+{% load core_tags i18n %}
+{% create_dict as field_attrs %}
+{% if target %}{% set_element field_attrs "data_target" target as _ %}{% endif %}
+{% if action %}{% set_element field_attrs "data_action" action as _ %}{% endif %}
+{% save "form-control" as base_control_class %}
+{% if field.field.widget|class_name == "SummernoteInplaceWidget" %}{% save "" as base_control_class %}{% endif %}
+{% if extra_input_class %}{% save base_control_class|add:" "|add:extra_input_class as input_class %}{% else %}{% save base_control_class as input_class %}{% endif %}
+{% capture as required_text silent %}<span class="text-red">*</span>{% endcapture %}
+{% if not field|is_hidden_input %}
+{% if field|is_radio_select and not hide_label %}
+<p>{{field.label|safe}} {% if field.field.required and not hide_required_badges %}{{ required_text }}{% endif %}</p>
+{% endif %}
+{% if field|is_checkbox_select_multiple and not hide_label %}
+<p>{{field.label|safe}} {% if field.field.required and not hide_required_badges %}{{ required_text }}{% endif %}</p>
+{% endif %}
+<div class="{% if field|is_checkbox %}checkbox{% else %}form-group{% endif %} {% if field.errors %}has-error{% endif %}">
+    {% if field|is_checkbox %}
+    <label>{% widget_attrs_from_dict field field_attrs %} {{field.label|safe}} {% if field.field.required and not hide_required_badges %}{{ required_text }}{% endif %}</label>
+    {% elif field|is_checkbox_select_multiple %}
+        {% for item in field %}
+            <div class="form-check {{ extra_check_class }}">
+                {{ item.tag }}
+                <label for="{{ item.id_for_label }}">{{ item.choice_label }}</label>
+            </div>
+        {% endfor %}
+    {% elif field|is_radio_select %}
+        {# widget_attrs_from_dict field field_attrs as radio_select#}
+        {% for radio in field %}
+            <div class="form-check {{ extra_check_class }}">
+                {{ radio.tag }}
+                <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+            </div>
+        {% endfor %}
+    {% else %}
+        {% if not hide_label %}
+        <label class="control-label" for="{{field.id_for_label}}">{{field.label|safe}}
+            {% if field.field.required and not hide_required_badges %}{{ required_text }}{% endif %}
+        </label>
+        {% endif %}
+
+        {% if field|is_file_input %}
+            {% widget_attrs_from_dict field field_attrs %}
+        {% else %}
+            {% set_element field_attrs "class" input_class as _ %}
+            {% widget_attrs_from_dict field field_attrs %}
+    {% endif %}
+    {% endif %}
+    {% if field.help_text %}<small class="form-text text-muted">{{field.help_text|safe}}</small>{% endif %}
+    {% if field.errors %}
+    <ul class="list-unstyled">
+        {% for error in field.errors %}
+            <li class="text-danger"><small><i class="fa fa-exclamation-circle fa-fw"></i> {{error}}</small></li>
+            <script>
+                $('#{{ field.id_for_label }}').addClass('is-invalid');
+            </script>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% else %}
+    {% if field %}
+        {% widget_attrs_from_dict field field_attrs %}
+    {% endif %}
+{% endif %}

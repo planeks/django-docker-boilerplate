@@ -1,0 +1,54 @@
+version: '3.8'
+
+x-django: &django
+  build:
+    context: .
+    dockerfile: ./docker/django/Dockerfile
+  image: {{project_name}}_dev
+  depends_on:
+    - postgres
+    - redis
+    - mailhog
+  volumes:
+    - ./src:/opt/project/src:cached
+    - ./data/dev:/data:z
+  env_file:
+    - ./.env
+
+services:
+  django:
+    <<: *django
+    ports:
+      - "8000:8000"
+    command: dev
+    # entrypoint: /entrypoint dev
+  celeryworker:
+    <<: *django
+    command: celery-dev worker -l INFO
+  celerybeat:
+    <<: *django
+    command: celery-dev beat -l INFO
+  redis:
+    image: redis:6.0
+    volumes:
+      - ./data/dev_redis:/data
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+    image: {{project_name}}_dev_postgres
+    volumes:
+      - ./data/dev_postgres:/var/lib/postgresql/data:Z
+      - ./data/dev_backups:/backups:z
+    # ports:
+    #   - "5432:5432"
+    # environment:
+    #   - POSTGRES_ADDITIONAL_DATABASES=db1,db2
+    env_file:
+      - ./.env
+ mailhog:
+     image: mailhog/mailhog
+     logging:
+       driver: 'none'  # disable saving logs
+     ports:
+       - "8025:8025" # web ui

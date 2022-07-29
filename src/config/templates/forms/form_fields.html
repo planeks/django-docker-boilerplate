@@ -1,0 +1,16 @@
+{% load core_tags %}
+{% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endfor %}
+{% endif %}
+{% if show_fields %}
+    {% split_str show_fields as field_names %}
+{% endif %}
+{% for field in form %}
+    {% if show_fields %}
+        {% if field.name in field_names %}{% include "forms/field.html" %}{% endif %}
+    {% else %}
+        {% include "forms/field.html" %}
+    {% endif %}
+{% endfor %}

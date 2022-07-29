@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n core_tags static %}
+
+{% block extra_meta %}
+<meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block base_content %}
+<main class="auth mt-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-6 offset-lg-3">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "accounts/base_auth.html" %}
+{% load i18n core_tags static %}
+
+{% block title %}{% trans "Login" %}{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">{% trans "Login" %}</h1>
+
+<form method="post">
+    <input type="hidden" name="next" value="{{ next }}" />
+    {% csrf_token %}
+    {% include "forms/form_fields.html" with hide_required_badges=True %}
+    <div class="form-group">
+      <button class="btn btn-lg btn-primary btn-block" type="submit">{% trans "Login" %}</button>
+    </div>
+    <div class="text-center pt-2">
+      <a href="{% url 'password_reset' %}" rel="nofollow" class="link">{% trans "Forgot Password?" %}</a>
+    </div>
+</form>
+{% endblock %}

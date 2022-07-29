@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block body_class %}template-profile{% endblock %}
+
+{% block content %}
+<div class="row mt-4 mb-4">
+    <div class="col-md-3">
+        <div class="row mb-4">
+            <div class="col-12 col-md-10 offset-md-1">
+                {% include "accounts/_sidebar.html" %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-9">
+        {% block profile_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

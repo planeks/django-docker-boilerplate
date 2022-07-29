@@ -1,0 +1,18 @@
+{% extends "accounts/base_profile.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Edit personal information" %}{% endblock %}
+
+{% block profile_content %}
+<h1 class="mb-4">{% trans "Edit personal information" %}</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="next" value="{{ next }}" />
+    {% csrf_token %}
+    {% include "forms/form_fields.html" %}
+    <div class="form-group">
+    <button class="btn btn-primary" type="submit">{% trans "Submit" %}</button>
+    </div>
+</form>
+
+{% endblock %}
