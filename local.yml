@@ -1,18 +1,17 @@
-version: '3.4'
+version: '3.8'
 
 x-django: &django
   build:
     context: .
-    dockerfile: ./compose/local/django/Dockerfile
+    dockerfile: ./docker/django/Dockerfile
   image: {{project_name}}_local
   depends_on:
+    - postgres
     - redis
+  # - mailhog
   volumes:
-    - ./src:/app:cached
-    - ./data/local_staticfiles:/staticfiles:z
-    - ./data/local_sessions:/sessions:z
-    - ./data/local_extras:/extras:z
-    - ./data/local_email:/email:z
+    - ./src:/opt/project/src:cached
+    - ./data/local:/data:z
   env_file:
     - ./.env
 
@@ -21,12 +20,35 @@ services:
     <<: *django
     ports:
       - "8000:8000"
-    command: /start
+    command: dev
+    # entrypoint: /entrypoint dev
   celeryworker:
     <<: *django
-    command: /start-celeryworker
+    command: celery-dev worker -l INFO
   celerybeat:
     <<: *django
-    command: /start-celerybeat
+    command: celery-dev beat -l INFO -S redbeat.RedBeatScheduler
   redis:
     image: redis:6.0
+    volumes:
+      - ./data/local_redis:/data
+  postgres:
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+    image: {{project_name}}_local_postgres
+    volumes:
+      - ./data/local_postgres:/var/lib/postgresql/data:Z
+      - ./data/local_backups:/backups:z
+    # ports:
+    #   - "5432:5432"
+    # environment:
+    #   - POSTGRES_ADDITIONAL_DATABASES=db1,db2
+    env_file:
+      - ./.env
+#  mailhog:
+#      image: mailhog/mailhog
+#      logging:
+#        driver: 'none'  # disable saving logs
+#      ports:
+#        - "8025:8025" # web ui

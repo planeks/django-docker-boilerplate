@@ -40,3 +40,4 @@ __pycache__
 *.csv
 /celerybeat-schedule.db
 /*_config.json
+.DS_Store
