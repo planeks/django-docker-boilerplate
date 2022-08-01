@@ -8,6 +8,7 @@ PORT="${APP_PORT:-8000}"
 
 echo "Checking the necessary directories..."
 mkdir -p /data/staticfiles
+# mkdir -p /data/media
 
 if [ -z "${POSTGRES_USER}" ]; then
     base_postgres_image_default_user='postgres'

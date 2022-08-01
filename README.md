@@ -2,14 +2,19 @@
 
 ## How to create the project
 
-```shell
-$ python3 -m venv venv
-$ source venv/bin/activate
-$ wget https://github.com/planeks/django-docker-boilerplate/archive/0.9.1.tar.gz
-$ django-admin startproject myproject --template 0.9.1.tar.gz -e py,html,md,yml -n start
-```
+Download the last version of the boiler plate from the repository: https://github.com/planeks/django-docker-boilerplate
 
-After successful project creation, you may delete `venv` directory and archive, that was downloaded. 
+You can download the ZIP archive and unpack it to the directory, or clone the repository (but do not forget to clean the Git history in that case). 
+
+Use the global find and replace for changing the string `NEWPROJECTNAME` in the files in the `src` directory to the proper project name. The easiest way to do it just use `Replace` feature in the IDE.
+
+There are three files where the changes should be done:
+
+```
+src/config/settings.py
+src/config/templates/index.html
+src/config/urls.py
+```
 
 ## How to install Docker and Docker Compose
 
@@ -38,27 +43,34 @@ $ sudo chmod +x /usr/local/bin/docker-compose
 
 ## Running the project on the local machine
 
-You need to run the project locally during the development. First of all, copy the `local.env` file to the `.env` file in the same directory.
+You need to run the project locally during the development. First of all, copy the `dev.env` file to the `.env` file in the same directory.
 
 ```shell
-$ cp local.env .env
+$ cp dev.env .env
 ```
 
 Open the `.env` file in your editor and specify the settings:
 
 ```shell
 PYTHONENCODING=utf8
+COMPOSE_IMAGES_PREFIX=newprojectname
 DEBUG=1
 CONFIGURATION=dev
 DJANGO_LOG_LEVEL=INFO
 SECRET_KEY="<secret_key>"
-SQLITE_DB=/extras/myproject.sqlite3
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=db
+POSTGRES_USER=dbuser
+POSTGRES_PASSWORD=dbpassword
 REDIS_URL=redis://redis:6379/0
-STATIC_ROOT=/staticfiles
-SESSION_FILE_PATH=/sessions
-EMAIL_FILE_PATH=/email
 SITE_URL=http://myproject.local:8000
+EMAIL_HOST=mailhog
+EMAIL_PORT=1025
 ```
+
+Please, use the value for `COMPOSE_IMAGES_PREFIX` that correlates with the project name. It will be used as the container images prefix for `docker-compose`.
+
 
 We strongly recommend creating some local domain in your `/etc/hosts` file to work with the project :
 
@@ -66,36 +78,36 @@ We strongly recommend creating some local domain in your `/etc/hosts` file to wo
 127.0.0.1   myproject.local
 ```
 
-Also, we use SQLite for development process in this template. Specify the full path to the database file in the container if you add
-the `SQLITE_DB` variable. In this particular case use the path like `/extras/database_file_name.db`.
+We specify the following volume in the application container:
 
-We specify the following volumes in the application container:
+- `/data` -> `data/dev`
 
-- `/extras` -> `data/local_extras`
-- `/staticfiles` -> `data/local_staticfiles`
-- `/email` -> `data/local_email`
-- `/sessions` -> `data/local_sessions`
-
-You need to edit `Dockerfile` and `local.yml` file if you want to add other directories to the container and define them as
-volumes.
+You need to edit `Dockerfile`, `entrypoint` and `docker-compose.dev.yml` files if you need to add other directories to the container and define them as volumes.
 
 Use the following command to build the containers:
 
 ```shell
-$ docker-compose -f local.yml build
+$ docker-compose -f docker-compose.dev.yml build
 ```
 
 Use the next command to run the project in detached mode:
 
 ```shell
-$ docker-compose -f local.yml up -d
+$ docker-compose -f docker-compose.dev.yml up -d
 ```
 
 Use the following command to run `bash` inside the container if you want to run a management command like Django interactive shell.
 
 ```shell
-$ docker-compose -f local.yml exec django bash
+$ docker-compose -f docker-compose.dev.yml exec django bash
 ```
+
+Or, you can run the temporary container:
+
+```shell
+$ docker-compose -f docker-compose.dev.yml run --rm django bash
+```
+
 
 ## Running the project in PyCharm
 
@@ -242,11 +254,13 @@ $ sudo apt install -y git wget tmux htop mc nano build-essential
 
 And install Docker and Docker Compose as it was described above.
 
-Create a new group on the host machine with `gui 1024` . It will be important for allowing to setup correct non-root permissions to the volumes.
+Create a new group on the host machine with `gid 1024` . It will be important for allowing to setup correct non-root permissions to the volumes.
 
 ```bash
 $ sudo addgroup --gid 1024 django
 ```
+
+> NOTE. If you cannot use the GID 1024 for any reason, you can choose other value but edit the `Dockerfile` as well.
 
 And add your user to the group:
 
@@ -270,16 +284,17 @@ Go inside the project directory and do the next to create initial volumes:
 $ source ./init_production_volumes.sh
 ```
 
-Then you need to create the `.env` file with proper settings. You can use the `production.env` as a template to create it
+Then you need to create the `.env` file with proper settings. You can use the `prod.env` as a template to create it
 
 ```shell
-$ cp production.env .env
+$ cp prod.env .env
 ```
 
 Open the `.env` file in your editor and specify the settings:
 
 ```shell
 PYTHONENCODING=utf8
+COMPOSE_IMAGES_PREFIX=newprojectname
 DEBUG=0
 CONFIGURATION=prod
 DJANGO_LOG_LEVEL=INFO
@@ -287,63 +302,29 @@ SECRET_KEY="<secret_key>"
 ALLOWED_HOSTS=example.com
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
-POSTGRES_DB=my_project
-POSTGRES_USER=my_project
+POSTGRES_DB=db
+POSTGRES_USER=dbuser
 POSTGRES_PASSWORD=<db_password>
 REDIS_URL=redis://redis:6379/0
 STATIC_ROOT=/staticfiles
 SESSION_FILE_PATH=/sessions
+SITE_DOMAIN=example.com
 SITE_URL=https://example.com
 EMAIL_HOST=
 EMAIL_PORT=25
 EMAIL_HOST_USER=<email_user>
 EMAIL_HOST_PASSWORD=<email_password>
 SENTRY_DSN=<sentry_dsn>
-CELERY_FLOWER_USER=<flower_user>
-CELERY_FLOWER_PASSWORD=<flower_password>
 ```
 
 Change the necessary settings. Please check the `ALLOWED_HOSTS` settings that should
-contain the correct domain name.
-
-After that, open `production.yml` file and change the Traefik rules for the
-`django` and `flower` containers for correct work with your domain.
-
-For example, check the `labels` section here:
-
-```yml
-  django:
-    <<: *django
-    image: NEWPROJECTNAME_production_django
-    command: /start
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web-router.rule=Host(`example.com`)"
-      - "traefik.http.routers.web-router.entrypoints=web"
-      - "traefik.http.routers.web-router.middlewares=redirect,csrf"
-      - "traefik.http.routers.web-router.service=django"
-      - "traefik.http.routers.web-secure-router.rule=Host(`example.com`)"
-      - "traefik.http.routers.web-secure-router.entrypoints=web-secure"
-      - "traefik.http.routers.web-secure-router.middlewares=csrf"
-      - "traefik.http.routers.web-secure-router.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.web-secure-router.service=django"
-      - "traefik.http.services.django.loadbalancer.server.port=8000"
-      - "traefik.http.middlewares.redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect.redirectscheme.permanent=true"
-      - "traefik.http.middlewares.csrf.headers.hostsproxyheaders=X-Script-Name"
-```
-
-Find all `Host(...)` directives and replace the `example.com` with your domain.
-
-```bash
-$ sed -i -e 's/Host(`example.com`)/Host(`project.com`)/g' production.yml
-```
+contain the correct domain name. Also, you need to change the `SITE_DOMAIN` value that is using with configuring Caddy. It should be the value of the site domain. The value `COMPOSE_IMAGES_PREFIX` can be the same as for `dev` configuration. It is a prefix for the container images.
 
 Now you can run the containers:
 
 ```bash
-$ docker-compose -f production.yml build
-$ docker-compose -f production.yml up -d
+$ docker-compose -f docker-compose.prod.yml build
+$ docker-compose -f docker-compose.prod.yml up -d
 ```
 
 Also, you can setup the Cron jobs to schedule backups and cleaning unnecesary Docker data.
@@ -356,5 +337,5 @@ Add the next lines
 
 ```bash
 0 2 * * *       docker system prune -f >> /home/webprod/docker_prune.log 2>&1
-0 1 * * *       cd /home/webprod/projects/my_project && /usr/local/bin/docker-compose -f production.yml exec -T postgres backup >> /home/webprod/my_project_backup.log 2>&1
+0 1 * * *       cd /home/webprod/projects/my_project && /usr/local/bin/docker-compose -f docker-compose.prod.yml exec -T postgres backup >> /home/webprod/my_project_backup.log 2>&1
 ```
