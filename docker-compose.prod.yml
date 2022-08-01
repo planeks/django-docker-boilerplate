@@ -5,7 +5,7 @@ x-django: &django
     context: .
     dockerfile: ./docker/django/Dockerfile
   restart: always
-  image: NEWPROJECTNAME_prod
+  image: "${COMPOSE_IMAGES_PREFIX}_prod"
   depends_on:
     - postgres
     - redis
@@ -29,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/postgres/Dockerfile
-    image: NEWPROJECTNAME_prod_postgres
+    image: "${COMPOSE_IMAGES_PREFIX}_prod_postgres"
     restart: always
     volumes:
       - ./data/prod_postgres:/var/lib/postgresql/data:Z
@@ -42,7 +42,7 @@ services:
   caddy:
     image: caddy:2.5.2-alpine
     restart: unless-stopped
-    command: caddy reverse-proxy --from https://example.com:443 --to http://django:8000
+    command: "caddy reverse-proxy --from https://${SITE_DOMAIN}:443 --to http://django:8000"
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"

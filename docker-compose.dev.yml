@@ -4,7 +4,7 @@ x-django: &django
   build:
     context: .
     dockerfile: ./docker/django/Dockerfile
-  image: NEWPROJECTNAME_dev
+  image:  "${COMPOSE_IMAGES_PREFIX}_dev"
   depends_on:
     - postgres
     - redis
@@ -36,7 +36,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/postgres/Dockerfile
-    image: NEWPROJECTNAME_dev_postgres
+    image: "${COMPOSE_IMAGES_PREFIX}_dev_postgres"
     volumes:
       - ./data/dev_postgres:/var/lib/postgresql/data:Z
       - ./data/dev_backups:/backups:z

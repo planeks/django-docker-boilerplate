@@ -9,6 +9,7 @@ admin.site.site_header = 'NEWPROJECTNAME | Admin console'
 
 urlpatterns = [
     path('superadmin/', admin.site.urls),
+    path('', include('accounts.urls')),
     path('', include('core.urls')),
 ]
 

@@ -48,7 +48,7 @@ until postgres_ready; do
       exit -1
   fi
   >&2 echo 'Waiting for PostgreSQL to become available...'
-  sleep 1
+  sleep 2
 done
 >&2 echo 'PostgreSQL is available'
 }
