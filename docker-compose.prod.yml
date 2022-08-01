@@ -5,7 +5,7 @@ x-django: &django
     context: .
     dockerfile: ./docker/django/Dockerfile
   restart: always
-  image: {{project_name}}_prod
+  image: NEWPROJECTNAME_prod
   depends_on:
     - postgres
     - redis
@@ -29,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/postgres/Dockerfile
-    image: {{project_name}}_prod_postgres
+    image: NEWPROJECTNAME_prod_postgres
     restart: always
     volumes:
       - ./data/prod_postgres:/var/lib/postgresql/data:Z
@@ -47,6 +47,6 @@ services:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
     volumes:
-      - ./production_caddy:/data
+      - ./data/prod_caddy:/data
     depends_on:
       - django

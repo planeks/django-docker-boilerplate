@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
-PROJECT_NAME = config('PROJECT_NAME', default='{{project_name}}')
+PROJECT_NAME = config('PROJECT_NAME', default='NEWPROJECTNAME')
 
 
 SECRET_KEY = config('SECRET_KEY')
@@ -204,7 +204,7 @@ CELERYBEAT_SCHEDULER = 'redbeat.RedBeatScheduler'
 CELERY_BEAT_SCHEDULE = {}
 
 
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@{{project_name}}.com')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@NEWPROJECTNAME.com')
 EMAIL_BCC_ADDRESSES = config('EMAIL_BCC_ADDRESSES', default='', cast=Csv())
 
 USE_HTTPS = False

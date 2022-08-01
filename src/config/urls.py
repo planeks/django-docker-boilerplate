@@ -3,7 +3,7 @@ from django.urls import path, re_path, include
 from django.conf import settings
 
 
-admin.site.site_header = '{{project_name}} | Admin console'
+admin.site.site_header = 'NEWPROJECTNAME | Admin console'
 # admin.site.enable_nav_sidebar = False
 
 

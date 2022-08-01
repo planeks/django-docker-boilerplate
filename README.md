@@ -314,7 +314,7 @@ For example, check the `labels` section here:
 ```yml
   django:
     <<: *django
-    image: {{project_name}}_production_django
+    image: NEWPROJECTNAME_production_django
     command: /start
     labels:
       - "traefik.enable=true"
