@@ -20,6 +20,10 @@ DEBUG = config('DEBUG', default=CONFIGURATION == 'dev', cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*' if CONFIGURATION == 'dev' else '', cast=Csv())
 INTERNAL_IPS = config('INTERNAL_IPS', default='127.0.0.1', cast=Csv())
 
+SITE_URL = config('SITE_URL', default='')
+
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=SITE_URL, cast=Csv())
+
 SENTRY_DSN = config('SENTRY_DSN', default='')
 
 
@@ -198,7 +202,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 KEY_PREFIX = config('KEY_PREFIX', default=PROJECT_NAME)
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERYBEAT_SCHEDULER = 'redbeat.RedBeatScheduler'
+CELERY_BEAT_SCHEDULER = 'redbeat.RedBeatScheduler'
 # CELERYBEAT_SCHEDULE_FILENAME = config(
 #     'CELERYBEAT_SCHEDULE_FILENAME', default='/data/celerybeat-schedule.db')
 CELERY_BEAT_SCHEDULE = {}
@@ -210,7 +214,6 @@ EMAIL_BCC_ADDRESSES = config('EMAIL_BCC_ADDRESSES', default='', cast=Csv())
 USE_HTTPS = False
 
 LOGOUT_REDIRECT_URL = '/'
-SITE_URL = config('SITE_URL', default='')
 
 SESSION_COOKIE_AGE = config('SESSION_COOKIE_AGE', default=604800, cast=int)  # 1 week in seconds by default
 

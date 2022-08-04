@@ -7,12 +7,10 @@ cffi>=1.15
 django-anymail
 django-debug-toolbar
 django-extensions
-django-polymorphic
 django-redis-cache
 django-versionfield
 django-bootstrap-datepicker-plus
 django-webpack-loader
-flower
 freezegun
 gunicorn
 markdown

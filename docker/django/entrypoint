@@ -86,10 +86,10 @@ case "$1" in
     prod)
         wait_for_postgres
         run_setup_commands
-        exec /usr/local/bin/gunicorn ${PROJECT_NAME}.asgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src
+        exec /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src
 
         # Use the next line instead of previous one if you want to support Django channels
-        # exec /usr/local/bin/gunicorn ${PROJECT_NAME}.asgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src -k uvicorn.workers.UvicornWorker
+        # exec /usr/local/bin/gunicorn config.asgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src -k uvicorn.workers.UvicornWorker
     ;;
     bash)
         exec /bin/bash "${@:2}"
@@ -107,13 +107,10 @@ case "$1" in
         exec pip-compile requirements.in
     ;;
     celery)
-        exec celery -A celeryapp "${@:2}"
+        exec celery -A config "${@:2}"
     ;;
     celery-dev)
-        exec watchgod celery.__main__.main --args -A celeryapp ${*:2}
-    ;;
-    flower)
-        exec celery -A celeryapp --broker="${REDIS_URL}" --basic_auth="${CELERY_FLOWER_USER}:${CELERY_FLOWER_PASSWORD}"
+        exec watchgod celery.__main__.main --args -A config ${@:2}
     ;;
     *)
         show_help

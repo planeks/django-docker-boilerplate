@@ -28,18 +28,27 @@ services:
   celerybeat:
     <<: *django
     command: celery-dev beat -l INFO
+  flower:
+    image: mher/flower:0.9.7
+    command: "flower --broker=${REDIS_URL} --port=5555 --url-prefix=flower"
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    env_file:
+      - ./.env
   redis:
     image: redis:6.0
     volumes:
-      - ./data/dev_redis:/data
+      - dev_redis:/data
   postgres:
     build:
       context: .
       dockerfile: ./docker/postgres/Dockerfile
     image: "${COMPOSE_IMAGES_PREFIX}_dev_postgres"
     volumes:
-      - ./data/dev_postgres:/var/lib/postgresql/data:Z
-      - ./data/dev_backups:/backups:z
+      - dev_postgres:/var/lib/postgresql/data:Z
+      - dev_backups:/backups:z
     # ports:
     #   - "5432:5432"
     # environment:
@@ -52,3 +61,24 @@ services:
       driver: 'none'  # disable saving logs
     ports:
       - "8025:8025" # web ui
+  caddy:
+    build:
+      context: .
+      dockerfile: ./docker/caddy/Dockerfile
+    image: "${COMPOSE_IMAGES_PREFIX}_dev_caddy"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - dev_caddy:/data
+    env_file:
+      - ./.env
+    depends_on:
+      - django
+      - flower
+
+volumes:
+  dev_postgres:
+  dev_backups:
+  dev_redis:
+  dev_caddy:

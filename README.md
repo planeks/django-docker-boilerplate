@@ -133,7 +133,7 @@ and `celerybeat`, you need to setup three remote interpreters.
 Now you can go to `Run/Edit Configurations...` and add the particular running configurations.
 
 You can use the standard `Django Server` configuration to run `runserver`
-Specify the proper Python Interpreter, set the `Working directory` to `/app` and set `Host` option to `0.0.0.0`.
+Specify the proper Python Interpreter and set `Host` option to `0.0.0.0`.
 It is necessary, because the application server is running inside the container.
 
 ![Django Run Configuration](docs/django-run-configuration.jpg)
@@ -142,7 +142,7 @@ You can use `Python` configuration template to run Celery. Do not forget to
 set the proper remote interpreter and working directory. Also, set the following options:
 
 - `Script path` : `/usr/local/bin/watchgod`
-- `Parameters` : `celery.__main__.main --args -A my_project worker --loglevel=info -P solo`
+- `Parameters` : `celery.__main__.main --args -A config worker --loglevel=info -P solo`
 
 Here we use `watchgod` utility to automatically restart Celery if
 the source code has been changed.
@@ -152,7 +152,7 @@ the source code has been changed.
 Also, create the similar configuration for Celery Beat. Use the following options:
 
 - `Script path` : `/usr/local/bin/celery`
-- `Parameters` : `-A my_project beat -s /extras/celerybeat-schedule -l INFO --pidfile="/extras/celerybeat.pid"`
+- `Parameters` : `-A config beat -l INFO`
 
 Make sure you specify the proper path for `celerybeat.pid` with proper
 access rights.
@@ -306,8 +306,6 @@ POSTGRES_DB=db
 POSTGRES_USER=dbuser
 POSTGRES_PASSWORD=<db_password>
 REDIS_URL=redis://redis:6379/0
-STATIC_ROOT=/staticfiles
-SESSION_FILE_PATH=/sessions
 SITE_DOMAIN=example.com
 SITE_URL=https://example.com
 EMAIL_HOST=
@@ -315,6 +313,8 @@ EMAIL_PORT=25
 EMAIL_HOST_USER=<email_user>
 EMAIL_HOST_PASSWORD=<email_password>
 SENTRY_DSN=<sentry_dsn>
+CELERY_FLOWER_USER=flower
+CELERY_FLOWER_PASSWORD=<flower_password>
 ```
 
 Change the necessary settings. Please check the `ALLOWED_HOSTS` settings that should

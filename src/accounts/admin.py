@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User
 from .forms import UserChangeForm, UserCreationForm
@@ -58,9 +58,9 @@ class UserAdmin(BaseUserAdmin):
     ]
 
     def get_urls(self):
-        from django.conf.urls import url
+        from django.urls import path, re_path
         return [
-            url(
+            re_path(
                 r'^(.+)/change/password/$',
                 self.admin_site.admin_view(self.user_change_password),
                 name='auth_user_password_change',

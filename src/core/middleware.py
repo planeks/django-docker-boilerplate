@@ -11,6 +11,8 @@ __all__ = [
 
 def is_restricted_internal_url(url):
     URL_PREFIXES_EXCLUDES = [
+        # '/media/',
+        '/__debug__/',
         '/login/',
         '/register/',
         '/logout/',

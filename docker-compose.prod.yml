@@ -21,10 +21,17 @@ services:
     command: prod
   celeryworker:
     <<: *django
-    command: celery
+    command: celery worker -l INFO
   celerybeat:
     <<: *django
     command: celery beat -l INFO
+  flower:
+    image: mher/flower:0.9.7
+    command: "flower --broker=${REDIS_URL} --port=5555 --url-prefix=flower --basic_auth=${CELERY_FLOWER_USER}:${CELERY_FLOWER_PASSWORD}"
+    depends_on:
+      - redis
+    env_file:
+      - ./.env
   postgres:
     build:
       context: .
@@ -32,21 +39,32 @@ services:
     image: "${COMPOSE_IMAGES_PREFIX}_prod_postgres"
     restart: always
     volumes:
-      - ./data/prod_postgres:/var/lib/postgresql/data:Z
-      - ./data/prod_backups:/backups:z
+      - prod_postgres:/var/lib/postgresql/data:Z
+      - prod_backups:/backups:z
     env_file:
       - ./.env
   redis:
     image: redis:6.0
-    restart: always
+    restart: always    
   caddy:
-    image: caddy:2.5.2-alpine
+    build:
+      context: .
+      dockerfile: ./docker/caddy/Dockerfile
+    image: "${COMPOSE_IMAGES_PREFIX}_prod_caddy"
     restart: unless-stopped
-    command: "caddy reverse-proxy --from https://${SITE_DOMAIN}:443 --to http://django:8000"
     ports:
       - "0.0.0.0:80:80"
       - "0.0.0.0:443:443"
     volumes:
-      - ./data/prod_caddy:/data
+      - prod_caddy:/data
+    env_file:
+      - ./.env
     depends_on:
       - django
+      - flower
+
+volumes:
+  prod_postgres:
+  prod_backups:
+  prod_redis:
+  prod_caddy:
