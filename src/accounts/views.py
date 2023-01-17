@@ -1,17 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
-from django.utils.translation import gettext as _
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.urls import reverse, reverse_lazy
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Q
-from .models import User
 from .forms import EditUserForm
 
 
@@ -42,7 +33,7 @@ def edit_personal_information(request):
     return render(request, 'accounts/edit_personal_information.html', context)
 
 
-def login_view(request, template_name='accounts/login.html'):
+def login_view(request):
     from .forms import UserAuthForm
 
     redirect_to = request.POST.get('next', request.GET.get('next', ''))
@@ -66,7 +57,7 @@ def login_view(request, template_name='accounts/login.html'):
     return render(request, 'accounts/login.html', context)
 
 
-def register(request, template_name='accounts/register.html'):
+def register(request):
     from .forms import UserRegistrationForm
     if request.user.is_authenticated:
         return redirect(reverse('index'))

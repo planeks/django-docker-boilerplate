@@ -4,10 +4,8 @@ from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.auth.forms import (
     ReadOnlyPasswordHashField,
-    PasswordResetForm,
     AuthenticationForm,
 )
-from django.conf import settings
 from .models import User
 
 

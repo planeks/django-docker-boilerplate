@@ -3,7 +3,7 @@ celery
 celery-redbeat
 channels
 channels-redis
-cffi>=1.15
+cffi
 django-anymail
 django-debug-toolbar
 django-extensions

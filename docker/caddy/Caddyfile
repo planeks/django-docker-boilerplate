@@ -1,5 +1,9 @@
 
-{$SITE_DOMAIN}:443 {
+{$SITE_DOMAIN} {
 	reverse_proxy /flower/* flower:5555
 	reverse_proxy /* django:8000
 }
+
+# www.{$SITE_DOMAIN} {
+#    redir https://{$SITE_DOMAIN}{uri}
+# }

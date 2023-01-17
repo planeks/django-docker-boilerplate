@@ -28,9 +28,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields': (
-                'email', 'name', 'role', 'phone',
-                'language',
-                'time_zone',
+                'email', 'name',
                 'password1', 'password2')
         }),
     )
@@ -58,7 +56,7 @@ class UserAdmin(BaseUserAdmin):
     ]
 
     def get_urls(self):
-        from django.urls import path, re_path
+        from django.urls import re_path
         return [
             re_path(
                 r'^(.+)/change/password/$',
