@@ -89,7 +89,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = _('Users')
         ordering = ['name', '-date_joined']
 
-    def get_first_name(self):
+    def get_first_name(self) -> str:
+        """
+        Returns the first name of the user.
+        """
         chunks = self.name.split()
         if len(chunks) >= 1:
             return chunks[0]
@@ -97,10 +100,16 @@ class User(AbstractBaseUser, PermissionsMixin):
             return ''
 
     @property
-    def first_name(self):
+    def first_name(self) -> str:
+        """
+        Property to get the first name of the user.
+        """
         return self.get_first_name()
 
-    def get_last_name(self):
+    def get_last_name(self) -> str:
+        """
+        Returns the last name of the user.
+        """
         chunks = self.name.split()
         if len(chunks) >= 2:
             return chunks[1]
@@ -108,23 +117,39 @@ class User(AbstractBaseUser, PermissionsMixin):
             return ''
 
     @property
-    def last_name(self):
+    def last_name(self) -> str:
+        """
+        Property to get the last name of the user.
+        """
         return self.get_last_name()
 
     def __str__(self):
+        """
+        Returns the string representation of the user based on the name.
+        """
         return self.name
 
     def get_email_md5_hash(self):
+        """
+        Returns the MD5 hash of the user's email. You can use it
+        for Gravatar or other services.
+        """
         import hashlib
         m = hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
         return m
 
     def has_usable_password(self) -> bool:
+        """
+        Checks if the user has a usable password.
+        """
         return super().has_usable_password()
     has_usable_password.boolean = True
 
     @property
-    def days_on_site(self):
+    def days_on_site(self) -> int:
+        """
+        Returns the number of days the user has been on the site.
+        """
         from django.utils.timezone import now
         delta = now() - self.date_joined
         return delta.days

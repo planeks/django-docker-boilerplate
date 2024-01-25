@@ -1,13 +1,16 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from .forms import EditUserForm
 
 
 @login_required
-def personal_information(request):
+def personal_information_view(request):
+    """
+    View to display the personal information of the logged-in user.
+    """
     user = request.user
     context = {
         'user': user,
@@ -17,7 +20,10 @@ def personal_information(request):
 
 
 @login_required
-def edit_personal_information(request):
+def personal_information_edit_view(request):
+    """
+    View to edit the personal information of the logged-in user.
+    """
     user = request.user
     if request.method == 'POST':
         form = EditUserForm(instance=user, data=request.POST, files=request.FILES)
@@ -34,10 +40,12 @@ def edit_personal_information(request):
 
 
 def login_view(request):
+    """
+    View to handle user login.
+    """
     from .forms import UserAuthForm
 
     redirect_to = request.POST.get('next', request.GET.get('next', ''))
-    do_redirect = False
 
     if request.user.is_authenticated:
         if redirect_to == request.path:
@@ -57,7 +65,10 @@ def login_view(request):
     return render(request, 'accounts/login.html', context)
 
 
-def register(request):
+def register_view(request):
+    """
+    View to handle user registration.
+    """
     from .forms import UserRegistrationForm
     if request.user.is_authenticated:
         return redirect(reverse('index'))
@@ -78,6 +89,9 @@ def register(request):
 
 
 def logout_view(request):
+    """
+    View to handle user logout.
+    """
     _next = request.GET.get('next')
     logout(request)
     return redirect(_next if _next else settings.LOGOUT_REDIRECT_URL)
