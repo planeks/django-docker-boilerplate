@@ -1,7 +1,7 @@
 
 {$SITE_DOMAIN} {
-	reverse_proxy /flower/* flower:5555
-	reverse_proxy /* django:8000
+    reverse_proxy /flower/* flower:5555
+    reverse_proxy /* django:8000
 }
 
 # www.{$SITE_DOMAIN} {

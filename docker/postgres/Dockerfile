@@ -1,4 +1,4 @@
-FROM postgres:14
+FROM postgres:16
 
 # Uncomment the next line if you need to host multiple databases per cluster
 # COPY ./docker/postgres/create_multiple_databases.sh /docker-entrypoint-initdb.d

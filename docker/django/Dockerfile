@@ -1,10 +1,11 @@
-FROM python:3.10-bullseye
+FROM python:3.12-bullseye
 
 ENV PYTHONUNBUFFERED 1
 
-# Remove adding NodeJS repository if you do not need it
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-  && apt-get update \
+# Uncomment adding NodeJS repository if you do not need it
+RUN \
+  # curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+  apt-get update \
   # dependencies for building Python packages
   && apt-get install -y build-essential \
   # psycopg2 dependencies
@@ -12,10 +13,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
   # Translations dependencies
   && apt-get install -y gettext \
   # Some extra packages
-  && apt-get install -y curl nano graphviz \
+  && apt-get install -y curl graphviz \
   # Other dependencies \
-  # Remove the next line if you do not need NodeJS
-  && apt-get install -y nodejs \
+  # Uncomment the next line if you need NodeJS
+  # && apt-get install -y nodejs \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*

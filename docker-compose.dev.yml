@@ -47,8 +47,8 @@ services:
       dockerfile: ./docker/postgres/Dockerfile
     image: "${COMPOSE_IMAGES_PREFIX}_dev_postgres"
     volumes:
-      - dev_postgres:/var/lib/postgresql/data:Z
-      - dev_backups:/backups:z
+      - ./data/dev_postgres:/var/lib/postgresql/data:Z
+      - ./data/dev_backups:/backups:z
     # ports:
     #   - "5432:5432"
     # environment:
@@ -78,7 +78,5 @@ services:
       - flower
 
 volumes:
-  dev_postgres:
-  dev_backups:
   dev_redis:
   dev_caddy:

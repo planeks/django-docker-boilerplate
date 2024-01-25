@@ -27,11 +27,6 @@ def debug_context(context):
 # Settings
 
 @register.simple_tag
-def tabbli_version():
-    return settings.TABBLI_VERSION
-
-
-@register.simple_tag
 def load_option(option, default=None):
     return getattr(settings, option, default)
 

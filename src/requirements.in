@@ -1,4 +1,5 @@
-django==4.1
+django==4.2.*
+docutils
 celery
 celery-redbeat
 channels
@@ -7,8 +8,6 @@ cffi
 django-anymail
 django-debug-toolbar
 django-extensions
-django-redis-cache
-django-versionfield
 django-bootstrap-datepicker-plus
 django-webpack-loader
 freezegun
@@ -27,7 +26,6 @@ requests
 sentry-sdk
 shortuuid
 social-auth-app-django
-turbo-django
 uvicorn[standard]
 watchgod
 werkzeug

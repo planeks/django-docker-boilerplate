@@ -8,6 +8,7 @@ admin.site.site_header = 'NEWPROJECTNAME | Admin console'
 
 
 urlpatterns = [
+    path('superadmin/doc/', include('django.contrib.admindocs.urls')),
     path('superadmin/', admin.site.urls),
     path('', include('accounts.urls')),
     path('', include('core.urls')),
