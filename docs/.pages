@@ -1,0 +1,6 @@
+nav:
+
+- 'Home': 'index.md'
+- 'Database' : 'db_schema.md'
+- 'Development plan' : development_plan
+- 'External services' : external_services

@@ -61,21 +61,34 @@ services:
       driver: 'none'  # disable saving logs
     ports:
       - "8025:8025" # web ui
-  caddy:
+  mkdocs:
     build:
       context: .
-      dockerfile: ./docker/caddy/Dockerfile
-    image: "${COMPOSE_IMAGES_PREFIX}_dev_caddy"
-    ports:
-      - "80:80"
-      - "443:443"
+      dockerfile: ./docker/mkdocs/Dockerfile
+    image: "${COMPOSE_IMAGES_PREFIX}_dev_mkdocs"
     volumes:
-      - dev_caddy:/data
+      - ./docs:/docs:cached
+      - ./data/dev_mkdocs:/data:z
+    ports:
+      - "8050:8000"
     env_file:
       - ./.env
-    depends_on:
-      - django
-      - flower
+# Uncomment if you need Caddy locally
+#  caddy:
+#    build:
+#      context: .
+#      dockerfile: ./docker/caddy/Dockerfile
+#    image: "${COMPOSE_IMAGES_PREFIX}_dev_caddy"
+#    ports:
+#      - "80:80"
+#      - "443:443"
+#    volumes:
+#      - dev_caddy:/data
+#    env_file:
+#      - ./.env
+#    depends_on:
+#      - django
+#      - flower
 
 volumes:
   dev_redis:
