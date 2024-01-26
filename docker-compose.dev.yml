@@ -69,6 +69,7 @@ services:
     volumes:
       - ./docs:/docs:cached
       - ./data/dev_mkdocs:/data:z
+      - ./src:/src:cached
     ports:
       - "8050:8000"
     env_file:

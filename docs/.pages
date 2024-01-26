@@ -2,5 +2,6 @@ nav:
 
 - 'Home': 'index.md'
 - 'Database' : 'db_schema.md'
+- 'App': app
 - 'Development plan' : development_plan
 - 'External services' : external_services
