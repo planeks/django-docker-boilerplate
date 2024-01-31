@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+
+### Cleanup backups.
+###
+### Parameters:
+###     <1> the maximum backups age in days
+###
+### Usage:
+###     $ docker-compose -f <environment>.yml (exec |run --rm) postgres cleanup <1>
+
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+
+working_dir="$(dirname ${0})"
+source "${working_dir}/_sourced/constants.sh"
+source "${working_dir}/_sourced/messages.sh"
+
+
+message_welcome "Cleaning the backup directory..."
+
+find $BACKUP_DIR_PATH/*.gz -mtime +$1 -exec rm {} \;
