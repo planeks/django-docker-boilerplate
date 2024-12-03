@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # 'polymorphic',
-    # 'channels',
     # 'anymail',
     'django_extensions',
 
@@ -47,26 +46,6 @@ INSTALLED_APPS = [
     'accounts',
 ]
 
-if CONFIGURATION == 'dev':
-    INSTALLED_APPS += [
-        'debug_toolbar',
-    ]
-    DEBUG_TOOLBAR_PANELS = [
-        'debug_toolbar.panels.history.HistoryPanel',
-        'debug_toolbar.panels.versions.VersionsPanel',
-        'debug_toolbar.panels.timer.TimerPanel',
-        'debug_toolbar.panels.settings.SettingsPanel',
-        'debug_toolbar.panels.headers.HeadersPanel',
-        'debug_toolbar.panels.request.RequestPanel',
-        'debug_toolbar.panels.sql.SQLPanel',
-        'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-        'debug_toolbar.panels.templates.TemplatesPanel',
-        'debug_toolbar.panels.cache.CachePanel',
-        'debug_toolbar.panels.signals.SignalsPanel',
-        'debug_toolbar.panels.logging.LoggingPanel',
-        'debug_toolbar.panels.redirects.RedirectsPanel',
-        'debug_toolbar.panels.profiling.ProfilingPanel',
-    ]
 
 if SENTRY_DSN:
     import sentry_sdk
@@ -106,13 +85,6 @@ MIDDLEWARE = [
     'core.middleware.login_required_middleware',
 ]
 
-if CONFIGURATION == 'dev':
-    MIDDLEWARE += [
-        'debug_toolbar.middleware.DebugToolbarMiddleware',
-    ]
-    DEBUG_TOOLBAR_CONFIG = {
-        'SHOW_TOOLBAR_CALLBACK': lambda x: True,
-    }
 
 
 ROOT_URLCONF = 'config.urls'
@@ -121,7 +93,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'config' / 'templates',
+            BASE_DIR / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -171,14 +143,6 @@ REDIS_URL = config('REDIS_URL')
 
 WSGI_APPLICATION = 'config.wsgi.application'
 # ASGI_APPLICATION = 'config.asgi.application'
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [REDIS_URL],
-#         },
-#     },
-# }
 
 
 # Static files (CSS, JavaScript, Images)
@@ -188,7 +152,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = config('STATIC_ROOT', default=os.path.join(BASE_DIR, '/data/staticfiles'))
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'config', 'static'),
+    os.path.join(BASE_DIR, 'static'),
 )
 
 # MEDIA_URL = '/media/'
@@ -234,31 +198,3 @@ CACHES = {
         'KEY_PREFIX': KEY_PREFIX,
     },
 }
-
-
-if CONFIGURATION == 'prod':
-    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-    USE_HTTPS = config('USE_HTTPS', default='0', cast=bool)
-
-    if USE_HTTPS:
-        SECURE_SSL_REDIRECT = True
-        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-elif CONFIGURATION == 'testing':
-    DEBUG = False
-
-    CELERY_BROKER_URL = 'redis://'
-    CELERY_RESULT_BACKEND = 'redis://'
-
-    PASSWORD_HASHERS = [
-        'django.contrib.auth.hashers.MD5PasswordHasher',
-    ]
-
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-        }
-    }
-
-    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'test@test.com'

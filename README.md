@@ -74,7 +74,6 @@ Open the `.env` file in your editor and specify the settings:
 
 ```shell
 PYTHONENCODING=utf8
-COMPOSE_IMAGES_PREFIX=newprojectname
 DEBUG=1
 CONFIGURATION=dev
 DJANGO_LOG_LEVEL=INFO
@@ -89,8 +88,6 @@ SITE_URL=http://myproject.local:8000
 EMAIL_HOST=mailhog
 EMAIL_PORT=1025
 ```
-
-Please, use the value for `COMPOSE_IMAGES_PREFIX` that correlates with the project name. It will be used as the container images prefix for `docker-compose`.
 
 📌 Generate the secret key for the project and paste it to the `.env` file.
 Also, generate the reasonably good password for the database user.

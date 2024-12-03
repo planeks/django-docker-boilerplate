@@ -1,0 +1,18 @@
+#!/bin/bash
+#!/usr/bin/env bash
+#!/bin/sh
+
+case "$1" in
+    serve)
+        exec poetry run mkdocs serve -a 0.0.0.0:8000
+    ;;
+    build)
+        exec poetry run mkdocs build
+    ;;
+    bash)
+        exec poetry run /bin/bash "${@:2}"
+    ;;
+    *)
+        exit 1
+    ;;
+esac
