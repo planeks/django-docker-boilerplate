@@ -3,6 +3,7 @@ name = "django-docker-boilerplate"
 version = "0.1.0"
 description = ""
 authors = ["Planeks <planeks@planeks.net>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"

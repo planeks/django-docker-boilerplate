@@ -64,7 +64,7 @@ bash      : Start a bash shell
 manage    : Start manage.py
 python    : Run a python command
 shell     : Start a Django Python shell
-pip-compile: Run pip-compile
+add       : Add package via Poetry
 celery    : Run celery
 celery-dev: Run a hot-reloading dev version of celery
 help      : Show this message
@@ -90,6 +90,11 @@ case "$1" in
     ;;
     bash)
         exec /bin/bash "${@:2}"
+    ;;
+    add)
+      # Usage: docker-compose run web add django-environ@^0.11
+      # Everything after "add" is passed straight to Poetry.
+      exec poetry add "${@:2}"
     ;;
     manage)
         exec poetry run python manage.py "${@:2}"
