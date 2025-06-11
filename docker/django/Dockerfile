@@ -30,16 +30,20 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 # Create appuser
 RUN addgroup --gid 1024 appuser \
     && adduser --disabled-password --gecos "" --force-badname --ingroup appuser appuser
-
-# Create project directory and set permissions
-RUN mkdir -p /opt/project/src
-RUN chown -R appuser:appuser /opt/project
+ \
+    # Set WORKDIR to the project directory
+WORKDIR /opt/project/src
 
 # Copy only pyproject.toml and poetry.lock first (for better caching)
 COPY --chown=appuser:appuser ./src/pyproject.toml ./src/poetry.lock /opt/project/src/
 
-# Set WORKDIR to the project directory
-WORKDIR /opt/project/src
+# Copy the rest of the application code
+COPY --chown=appuser:appuser ./src /opt/project/src
+
+
+# Create project directory and set permissions
+RUN mkdir -p /opt/project/src
+RUN chown -R appuser:appuser /opt/project
 
 # Switch to non-root user for Poetry operations
 USER appuser
@@ -75,8 +79,6 @@ COPY --chown=appuser:appuser ./docker/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-# Copy the rest of the application code
-COPY --chown=appuser:appuser ./src /opt/project/src
 
 # Setup data directory
 RUN mkdir -p /data \
@@ -86,7 +88,5 @@ RUN mkdir -p /data \
 
 # Switch back to non-root user
 USER appuser
-
 WORKDIR /opt/project/src
-
 ENTRYPOINT ["/entrypoint"]
