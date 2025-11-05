@@ -11,7 +11,8 @@ x-django: &django
     - mailhog
   volumes:
     - ./src:/opt/project/src:cached
-    - ./data/dev:/data:z
+    - /opt/project/src/.venv
+    - django_data:/data
   env_file:
     - ./.env
 
@@ -21,7 +22,6 @@ services:
     ports:
       - "8000:8000"
     command: dev
-    # entrypoint: /entrypoint dev
   celeryworker:
     <<: *django
     command: celery-dev worker -l INFO
@@ -49,10 +49,6 @@ services:
     volumes:
       - ./data/dev_postgres:/var/lib/postgresql/data:Z
       - ./data/dev_backups:/backups:z
-    # ports:
-    #   - "5432:5432"
-    # environment:
-    #   - POSTGRES_ADDITIONAL_DATABASES=db1,db2
     env_file:
       - ./.env
   mailhog:
@@ -94,3 +90,4 @@ services:
 volumes:
   dev_redis:
   dev_caddy:
+  django_data:

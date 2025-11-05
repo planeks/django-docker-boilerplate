@@ -495,4 +495,193 @@ Add the next lines
 0 2 * * *       docker system prune -f >> /home/webprod/docker_prune.log 2>&1
 ```
 
+# GitHub Actions Setup Guide
+
+## Overview
+
+This guide will help you set up GitHub Actions workflows for a Django/React application with three environments: Development, Staging, and Production.
+
+## Create Workflow Files
+
+Project already contains following directory structure:
+
+```
+.github/workflows/
+├── ci.yml                    # CI tests for backend
+├── deploy-reusable.yml       # Reusable deployment workflow
+├── dev_deploy.yml            # Development deployment
+├── staging_deploy.yml        # Staging deployment
+└── production_deploy.yml     # Production deployment
+```
+
+## 2. Set Up Environments
+
+Navigate to your repository on GitHub:
+
+1. Go to **Settings** → **Environments**
+2. Create three environments:
+   - `dev`
+   - `staging`
+   - `production`
+
+### Production Environment Protection
+
+For the **production** environment:
+1. Click on the `production` environment
+2. Enable **"Required reviewers"**
+3. Add team members who should approve production deployments
+4. Optionally set a **wait timer** (e.g., 5 minutes) before deployment
+
+## 3. Configure Secrets
+
+For each environment, add the required secrets:
+
+### Development Environment (`dev`)
+
+Go to **Settings → Environments → dev → Secrets**
+
+Add the following secrets:
+- **`DEV_HOST`** - Your development server IP address or hostname
+- **`DEV_SSH_KEY`** - SSH private key for accessing the dev server
+- [Optional] **`DEV_HEALTH_URL`** - e.g., `https://dev.yourapp.com/`
+
+### Staging Environment (`staging`)
+
+Go to **Settings → Environments → staging → Secrets**
+
+Add the following secrets:
+- **`STAGING_HOST`** - Your staging server IP address or hostname
+- **`STAGING_SSH_KEY`** - SSH private key for accessing the staging server
+- [Optional] **`STAGING_HEALTH_URL`** - e.g., `https://staging.yourapp.com/`
+
+### Production Environment (`production`)
+
+Go to **Settings → Environments → production → Secrets**
+
+Add the following secrets:
+- **`PROD_HOST`** - Your production server IP address or hostname
+- **`PROD_SSH_KEY`** - SSH private key for accessing the production server
+- [Optional] **`PROD_HEALTH_URL`** - e.g., `https://yourapp.com/`
+
+### Generating SSH Keys
+
+If you need to generate SSH keys for GitHub:
+**Note**: make sure to **not** use a passphrase for the key.
+
+```bash
+# Generate a new SSH key pair
+ssh-keygen -t ed25519 -C "github-actions" -f github_actions_key
+
+# Copy the public key to your server
+ssh-copy-id -i github_actions_key.pub appuser@your-server
+
+# Copy the private key content to GitHub Secrets
+cat github_actions_key
+```
+
+## 4. Set Up Your Servers
+
+Ensure each server (dev, staging, production) has:
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Git installed
+- User `appuser` created with sudo privileges
+- You followed steps above in this document
+
+## 5. How Deployments Work
+
+### Development Deployment
+
+**Trigger:** Push to `develop` branch
+
+**Process:**
+1. Runs CI
+2. Checks out code
+3. Deploys to dev server using `compose.dev.yml`
+4. Runs database migrations
+
+**Command to trigger manually:**
+```bash
+git push origin develop
+```
+
+Or use **Actions** → **Deploy to Development** → **Run workflow**
+
+### Staging (Production) Deployment
+
+**Trigger:** Push to `staging (main)` branch
+
+**Process:**
+1. Runs CI tests (backend and frontend)
+2. Deploys to the server using `compose.prod.yml`
+3. Runs database migrations
+4. Collects static files
+
+**Command to trigger manually:**
+```bash
+git push origin staging (main)
+```
+
+Or use **Actions** → **Deploy to Staging (Production)** → **Run workflow**
+
+## 6. Branch Strategy
+
+The workflow is designed for this Git branching strategy:
+
+```
+develop  → Development environment
+   ↓
+staging  → Staging environment (merge develop here)
+   ↓
+ main    → Production environment (merge staging here)
+```
+
+## 6. Monitoring Deployments
+
+### View Workflow Runs
+
+1. Go to **Actions** tab in your repository
+2. Select a workflow from the left sidebar
+3. Click on a specific run to see details
+
+### Deployment Status
+
+You can monitor:
+- Build logs
+- Test results
+- Deployment status
+- Health check results
+
+### Troubleshooting
+
+If a deployment fails:
+1. Check the workflow logs in the **Actions** tab
+2. SSH into the server and check:
+   ```bash
+   cd ~/projects/django-docker-boilerplate
+   docker compose -f compose.prod.yml logs
+   ```
+3. Verify secrets are correctly set in GitHub
+4. Ensure server has proper permissions and resources
+
+## Security Best Practices
+
+1. ✅ Never commit secrets or SSH keys to the repository
+2. ✅ Use environment-specific secrets
+3. ✅ Rotate SSH keys regularly
+4. ✅ Enable branch protection rules for `main` and `staging`
+5. ✅ Require pull request reviews before merging
+6. ✅ Use required reviewers for production deployments
+
+## Conclusion
+
+Your CI/CD pipeline is now set up! 🚀
+
+For any issues or questions, refer to:
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- Your project's specific requirements
+
 📌 If this document does not contain some important information, please, add it.

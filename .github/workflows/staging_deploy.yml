@@ -1,0 +1,44 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: [test]
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: staging
+      branch: staging
+      compose-file: compose.prod.yml
+      project-path: ~/projects/django-docker-boilerplate
+      health-check-url: ${{ vars.STAGING_HEALTH_URL || '' }}
+    secrets:
+      host: ${{ secrets.STAGING_HOST }}
+      ssh-key: ${{ secrets.STAGING_SSH_KEY }}
+
+  migrate:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Run database migrations
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: appuser
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd ~/projects/django-docker-boilerplate
+            echo "Running migrations..."
+            docker compose -f compose.prod.yml exec -T django poetry run python manage.py migrate --noinput
+
+            echo "Collecting static files..."
+            docker compose -f compose.prod.yml exec -T django poetry run python manage.py collectstatic --noinput
+
+            echo "Migrations complete!"

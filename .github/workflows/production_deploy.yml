@@ -1,0 +1,50 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  require-approval:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Prod requires environment approval in UI."
+
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: [test]
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: production
+      branch: main
+      compose-file: compose.prod.yml
+      project-path: ~/projects/django-docker-boilerplate
+      health-check-url: ${{ vars.PROD_HEALTH_URL || '' }}
+    secrets:
+      host: ${{ secrets.PROD_HOST }}
+      ssh-key: ${{ secrets.PROD_SSH_KEY }}
+
+  migrate:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Run database migrations
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: appuser
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd ~/projects/django-docker-boilerplate
+            echo "Running migrations..."
+            docker compose -f compose.prod.yml exec -T django poetry run python manage.py migrate --noinput
+
+            echo "Collecting static files..."
+            docker compose -f compose.prod.yml exec -T django poetry run python manage.py collectstatic --noinput
+
+            echo "Migrations complete!"
