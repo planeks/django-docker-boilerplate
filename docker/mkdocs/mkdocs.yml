@@ -48,4 +48,9 @@ plugins:
   - search
   - autorefs
   - awesome-pages
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [/code/src]
+          options:
+            show_source: true

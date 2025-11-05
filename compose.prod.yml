@@ -4,14 +4,18 @@ x-django: &django
   build:
     context: .
     dockerfile: ./docker/django/Dockerfile
+    args:
+      ENVIRONMENT: production  # Add build argument
   restart: always
   image: "${COMPOSE_IMAGES_PREFIX}_prod"
   depends_on:
     - postgres
-    - redis
   volumes:
     - ./src:/opt/project/src:cached
+    - venv_data:/opt/project/src/.venv  # Add venv volume
     - ./data/prod:/data:z
+    - static:/data/staticfiles/
+    - media:/data/media/
   env_file:
     - ./.env
 
@@ -19,12 +23,15 @@ services:
   django:
     <<: *django
     command: prod
+    entrypoint: /entrypoint prod  # Add explicit entrypoint
   celeryworker:
     <<: *django
     command: celery worker -l INFO
+    entrypoint: /entrypoint celery worker -l INFO  # Add explicit entrypoint
   celerybeat:
     <<: *django
     command: celery beat -l INFO
+    entrypoint: /entrypoint celery beat -l INFO  # Add explicit entrypoint
   flower:
     image: mher/flower:0.9.7
     command: "flower --broker=${REDIS_URL} --port=5555 --url-prefix=flower --basic_auth=${CELERY_FLOWER_USER}:${CELERY_FLOWER_PASSWORD}"
@@ -32,6 +39,9 @@ services:
       - redis
     env_file:
       - ./.env
+  redis:
+    image: redis:6.0
+    restart: always
   postgres:
     build:
       context: .
@@ -43,9 +53,14 @@ services:
       - prod_backups:/backups:z
     env_file:
       - ./.env
+<<<<<<< HEAD:docker-compose.prod.yml
   redis:
     image: redis:6.0
-    restart: always    
+    restart: always
+    volumes:
+      - prod_redis:/data
+=======
+>>>>>>> master:compose.prod.yml
   caddy:
     build:
       context: .
@@ -57,14 +72,23 @@ services:
       - "0.0.0.0:443:443"
     volumes:
       - prod_caddy:/data
+      - static:/static:ro
+      - media:/media
+      - caddy_config:/config
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
     env_file:
       - ./.env
     depends_on:
       - django
-      - flower
 
 volumes:
   prod_postgres:
   prod_backups:
-  prod_redis:
   prod_caddy:
+<<<<<<< HEAD:docker-compose.prod.yml
+  venv_data:  # Add venv volume definition
+=======
+  media:
+  static:
+  caddy_config:
+>>>>>>> master:compose.prod.yml

@@ -1,0 +1,23 @@
+{
+  "name": "Django Dev Container",
+  "dockerComposeFile": [
+    "docker-compose.dev.yml"
+  ],
+  "service": "django",  // name of the service running Django
+  "workspaceFolder": "/opt/project/src/src",
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "python.pythonPath": "/opt/project/src/.venv/bin/python"
+  },
+  "extensions": [],
+  "postCreateCommand": "poetry install",
+  "remoteEnv": {
+    "DJANGO_SETTINGS_MODULE": "config.settings.dev"
+  },
+  "forwardPorts": [8000, 5432, 8020],
+  "mounts": [
+    "source=${localWorkspaceFolder}/data,target=/opt/app/data,type=bind",
+    "source=${localWorkspaceFolder}/docs,target=/opt/app/docs,type=bind"
+  ],
+  "remoteUser": "root"
+}

@@ -21,7 +21,7 @@ exitFunc() {
 }
 
 postgres_ready() {
-python << END
+poetry run python << END
 import sys
 import psycopg2
 try:
@@ -64,7 +64,7 @@ bash      : Start a bash shell
 manage    : Start manage.py
 python    : Run a python command
 shell     : Start a Django Python shell
-pip-compile: Run pip-compile
+add       : Add package via Poetry
 celery    : Run celery
 celery-dev: Run a hot-reloading dev version of celery
 help      : Show this message
@@ -73,44 +73,54 @@ help      : Show this message
 
 run_setup_commands(){
   if [ "$COLLECTSTATIC_ON_STARTUP" = "1" ] ; then
-    python manage.py collectstatic --noinput
+    poetry run python manage.py collectstatic --noinput
   fi
-  python manage.py migrate
+  poetry run python manage.py migrate
 }
 
 case "$1" in
     dev)
         wait_for_postgres
-        exec python manage.py runserver 0.0.0.0:"${PORT}"
+        exec poetry run python manage.py runserver 0.0.0.0:"${PORT}"
     ;;
     prod)
         wait_for_postgres
         run_setup_commands
-        exec /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src
-
-        # Use the next line instead of previous one if you want to support Django channels
-        # exec /usr/local/bin/gunicorn config.asgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src -k uvicorn.workers.UvicornWorker
+        exec poetry run gunicorn config.wsgi --bind 0.0.0.0:"${PORT}" --chdir=/opt/project/src
     ;;
     bash)
         exec /bin/bash "${@:2}"
     ;;
+    add)
+      # Usage: docker-compose run web add django-environ@^0.11
+      # Everything after "add" is passed straight to Poetry.
+      exec poetry add "${@:2}"
+    ;;
     manage)
-        exec python manage.py "${@:2}"
+        exec poetry run python manage.py "${@:2}"
     ;;
     python)
-        exec python "${@:2}"
+        exec poetry run python "${@:2}"
     ;;
     shell)
-        exec python manage.py shell
+        exec poetry run python manage.py shell
     ;;
     pip-compile)
-        exec pip-compile requirements.in
+        exec poetry run pip-compile requirements.in
     ;;
     celery)
-        exec celery -A config "${@:2}"
+        wait_for_postgres
+        exec poetry run celery -A config "${@:2}"
     ;;
     celery-dev)
-        exec watchgod celery.__main__.main --args -A config ${@:2}
+        wait_for_postgres
+        if [ "$2" = "worker" ]; then
+            exec poetry run watchgod celery.__main__.main --args -A config worker "${@:3}"
+        elif [ "$2" = "beat" ]; then
+            exec poetry run watchgod celery.__main__.main --args -A config beat "${@:3}"
+        else
+            exec poetry run watchgod celery.__main__.main --args -A config "${@:2}"
+        fi
     ;;
     *)
         show_help

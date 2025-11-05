@@ -1,0 +1,37 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-reusable.yml
+    with:
+      environment: dev
+      branch: develop
+      compose-file: compose.dev.yml
+      project-path: ~/projects/django-docker-boilerplate
+      health-check-url: ${{ vars.DEV_HEALTH_URL || '' }}
+    secrets:
+      host: ${{ secrets.DEV_HOST }}
+      ssh-key: ${{ secrets.DEV_SSH_KEY }}
+
+  migrate:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Run database migrations
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: appuser
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            cd ~/projects/django-docker-boilerplate
+            echo "Running migrations..."
+            docker compose -f compose.dev.yml exec -T django poetry run python manage.py migrate --noinput
+
+            echo "Migrations complete!"
