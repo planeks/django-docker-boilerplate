@@ -1,0 +1,30 @@
+name: CI Tests
+
+on:
+  workflow_call: {}
+  push:
+    branches: [develop, staging, main]
+  pull_request:
+    branches: [develop, staging, main]
+
+jobs:
+  test-backend:
+    name: Test Django Backend
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Create test .env file
+      run: cp dev.env .env
+
+    - name: Build Docker images
+      run: docker compose -f compose.dev.yml build
+
+    - name: Run Django tests
+      run: docker compose -f compose.dev.yml run --rm django test
+
+    - name: Cleanup
+      if: always()
+      run: docker compose -f compose.dev.yml down -v

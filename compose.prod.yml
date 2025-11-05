@@ -10,11 +10,12 @@ x-django: &django
   image: "${COMPOSE_IMAGES_PREFIX}_prod"
   depends_on:
     - postgres
-    - redis
   volumes:
     - ./src:/opt/project/src:cached
     - venv_data:/opt/project/src/.venv  # Add venv volume
     - ./data/prod:/data:z
+    - static:/data/staticfiles/
+    - media:/data/media/
   env_file:
     - ./.env
 
@@ -38,6 +39,9 @@ services:
       - redis
     env_file:
       - ./.env
+  redis:
+    image: redis:6.0
+    restart: always
   postgres:
     build:
       context: .
@@ -49,11 +53,14 @@ services:
       - prod_backups:/backups:z
     env_file:
       - ./.env
+<<<<<<< HEAD:docker-compose.prod.yml
   redis:
     image: redis:6.0
     restart: always
     volumes:
       - prod_redis:/data
+=======
+>>>>>>> master:compose.prod.yml
   caddy:
     build:
       context: .
@@ -65,15 +72,23 @@ services:
       - "0.0.0.0:443:443"
     volumes:
       - prod_caddy:/data
+      - static:/static:ro
+      - media:/media
+      - caddy_config:/config
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
     env_file:
       - ./.env
     depends_on:
       - django
-      - flower
 
 volumes:
   prod_postgres:
   prod_backups:
-  prod_redis:
   prod_caddy:
+<<<<<<< HEAD:docker-compose.prod.yml
   venv_data:  # Add venv volume definition
+=======
+  media:
+  static:
+  caddy_config:
+>>>>>>> master:compose.prod.yml

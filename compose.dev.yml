@@ -50,10 +50,6 @@ services:
     volumes:
       - ./data/dev_postgres:/var/lib/postgresql/data:Z
       - ./data/dev_backups:/backups:z
-    # ports:
-    #   - "5432:5432"
-    # environment:
-    #   - POSTGRES_ADDITIONAL_DATABASES=db1,db2
     env_file:
       - ./.env
   mailhog:

@@ -1,0 +1,92 @@
+name: Reusable Deploy Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to deploy'
+        required: true
+        type: string
+      compose-file:
+        description: 'Docker compose file'
+        required: false
+        type: string
+        default: 'compose.dev.yml'
+      project-path:
+        description: 'Project path on server'
+        required: false
+        type: string
+        default: '/opt/app'
+      health-check-url:
+        required: false
+        type: string
+        description: 'Health check URL (e.g., https://example.com/)'
+    secrets:
+      host:
+        description: 'Server hostname'
+        required: true
+      ssh-key:
+        description: 'SSH private key'
+        required: true
+      username:
+        description: 'SSH username'
+        required: false
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.host }}
+          username: ${{ secrets.username || 'appuser' }}
+          key: ${{ secrets.ssh-key }}
+          script: |
+            set -e
+
+            echo "Navigating to project..."
+            cd ${{ inputs.project-path }}
+
+            echo "Pulling latest code..."
+            git fetch --all --prune
+            git checkout -B ${{ inputs.branch }} origin/${{ inputs.branch }}
+            git reset --hard origin/${{ inputs.branch }}
+
+            if [ "${{ inputs.compose-file }}" = "compose.prod.yml" ]; then
+              echo "Building and deploying production..."
+              docker compose -f ${{ inputs.compose-file }} --profile build build
+              docker compose -f ${{ inputs.compose-file }} up -d
+            else
+              echo "Building and deploying development..."
+              docker compose -f ${{ inputs.compose-file }} build
+              docker compose -f ${{ inputs.compose-file }} up -d
+            fi
+
+            echo "Cleaning up..."
+            docker image prune -f
+
+            echo "Deployment complete!"
+
+      - name: Waiting For Services Start
+        run: |
+          echo "Waiting for services to start..."
+          sleep 30
+
+      - name: Health check
+        if: inputs.health-check-url != ''
+        uses: jtalk/url-health-check-action@v4
+        with:
+          url: ${{ inputs.health-check-url }}
+          max-attempts: 3
+          retry-delay: 10s
