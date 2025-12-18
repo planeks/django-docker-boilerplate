@@ -34,6 +34,8 @@ uvicorn = {extras = ["standard"], version = "^0.32.1"}
 watchgod = "^0.8.2"
 werkzeug = "^3.1.3"
 whitenoise = "^6.8.2"
+djlint = "^1.36.4"
+djade = "^1.7.0"
 
 [tool.poetry.group.dev.dependencies]
 django-debug-toolbar = "^4.2"
@@ -113,4 +115,5 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+
 
