@@ -42,6 +42,8 @@ services:
   redis:
     image: redis:6.0
     restart: always
+    volumes:
+      - prod_redis:/data
   postgres:
     build:
       context: .
@@ -53,14 +55,6 @@ services:
       - prod_backups:/backups:z
     env_file:
       - ./.env
-<<<<<<< HEAD:docker-compose.prod.yml
-  redis:
-    image: redis:6.0
-    restart: always
-    volumes:
-      - prod_redis:/data
-=======
->>>>>>> master:compose.prod.yml
   caddy:
     build:
       context: .
@@ -85,10 +79,8 @@ volumes:
   prod_postgres:
   prod_backups:
   prod_caddy:
-<<<<<<< HEAD:docker-compose.prod.yml
+  prod_redis:
   venv_data:  # Add venv volume definition
-=======
   media:
   static:
   caddy_config:
->>>>>>> master:compose.prod.yml
