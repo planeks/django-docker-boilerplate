@@ -16,7 +16,7 @@ Use the global find and replace for changing the string `NEWPROJECTNAME` in the 
 There are three files where the changes should be done:
 
 ```
-src/config/settings.py
+src/config/settings/base.py
 src/config/templates/index.html
 src/config/urls.py
 ```
@@ -108,30 +108,30 @@ We specify the following volume in the application container:
 > and the "Deploying the project to the server" section for more details,
 > and adapt it for your needs.
 
-You need to edit `Dockerfile`, `entrypoint` and `docker-compose.dev.yml` files if you need to add other directories to the container and define them as volumes.
+You need to edit `Dockerfile`, `entrypoint` and `compose.dev.yml` files if you need to add other directories to the container and define them as volumes.
 
 Use the following command to build the containers:
 
 ```shell
-$ docker compose -f docker-compose.dev.yml build
+$ docker compose -f compose.dev.yml build
 ```
 
 Use the next command to run the project in detached mode:
 
 ```shell
-$ docker compose -f docker-compose.dev.yml up -d
+$ docker compose -f compose.dev.yml up -d
 ```
 
 Use the following command to run `bash` inside the container if you want to run a management command like Django interactive shell.
 
 ```shell
-$ docker compose -f docker-compose.dev.yml exec django bash
+$ docker compose -f compose.dev.yml exec django bash
 ```
 
 Or, you can run the temporary container:
 
 ```shell
-$ docker compose -f docker-compose.dev.yml run --rm django bash
+$ docker compose -f compose.dev.yml run --rm django bash
 ```
 
 ## 🏃‍ Running the project in PyCharm
@@ -142,7 +142,7 @@ of PyCharm.
 Go to `Preferences` -> `Project` -> `Python Interpreter`. Click the gear icon
 and select the `Add...` item.
 
-Select `Docker Compose` and specify your configuration file (`local.yml`) and
+Select `Docker Compose` and specify your configuration file (`compose.dev.yml`) and
 the particular service.
 
 ![Add Python Interpreter](docs/readme_images/add-remote-interpreter.jpg)
@@ -190,7 +190,7 @@ access rights.
 ![Celery Beat Run Configuration](docs/readme_images/celerybeat-run-configuration.jpg)
 
 > Configuring runners for the PyCharm is optional but simplify using
-> debugger. Anyway you can just use `docker compose -f docker-compose.dev.yml up -d`
+> debugger. Anyway you can just use `docker compose -f compose.dev.yml up -d`
 > in the terminal.
 
 ## 🖥️ Deploying the project to the server
@@ -387,8 +387,8 @@ contain the correct domain name. Also, you need to change the `SITE_DOMAIN` valu
 Now you can run the containers:
 
 ```bash
-$ docker compose -f docker-compose.prod.yml build
-$ docker compose -f docker-compose.prod.yml up -d
+$ docker compose -f compose.prod.yml build
+$ docker compose -f compose.prod.yml up -d
 ```
 
 ## Backup script
@@ -423,13 +423,13 @@ The `backup.sh` script should contain the next code:
 #!/bin/bash
 TIME_SUFFIX=`date +%Y-%m-%d:%H:%M:%S`
 cd /home/webprod/projects/newprojectname
-docker compose -f docker-compose.prod.yml exec -T postgres backup
-DB_DUMP_NAME=`docker compose -f docker-compose.prod.yml exec -T postgres backups | head -n 3 | tail -n 1 | tr -s ' ' '\n' | tail -1`
+docker compose -f compose.prod.yml exec -T postgres backup
+DB_DUMP_NAME=`docker compose -f compose.prod.yml exec -T postgres backups | head -n 3 | tail -n 1 | tr -s ' ' '\n' | tail -1`
 docker cp newprojectname_postgres_1:/backups/$DB_DUMP_NAME /home/webprod/backups/
 tar --exclude='media/thumbs' -zcvf /home/webprod/backups/newprojectname-$TIME_SUFFIX.tar.gz /home/webprod/projects/newprojectname/data/prod/media /home/webprod/projects/newprojectname/.env /home/webprod/projects/newprojectname/src /home/webprod/backups/$DB_DUMP_NAME
 s3cmd put /home/webprod/backups/newprojectname-$TIME_SUFFIX.tar.gz s3://newprojectname-backups/staging/
 find /home/webprod/backups/*.gz -mtime +5 -exec rm {} \;
-docker compose -f docker-compose.prod.yml exec -T postgres cleanup 7
+docker compose -f compose.prod.yml exec -T postgres cleanup 7
 ```
 
 📌 Modify the script according to the project needs. Check the directories and file names.
@@ -463,19 +463,19 @@ $ docker cp <dump_name> newprojectname_postgres_1:/backups/
 Stop the app containers that are using the database (`django`, `celeryworker`, etc.)
 
 ```bash
-$ docker compose -f docker-compose.prod.yml stop django celeryworker
+$ docker compose -f compose.prod.yml stop django celeryworker
 ``` 
 
 Restore the database:
 
 ```bash
-$ docker compose -f docker-compose.prod.yml exec -T postgres restore <dump_name>
+$ docker compose -f compose.prod.yml exec -T postgres restore <dump_name>
 ```
 
 Run the app containers again:
 
 ```bash
-$ docker compose -f docker-compose.prod.yml up -d django celeryworker
+$ docker compose -f compose.prod.yml up -d django celeryworker
 ```
 
 ## Cleaning Docker data
