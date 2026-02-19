@@ -1,5 +1,37 @@
+{
+    # Access logging in JSON format for fail2ban
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}
 
 {$SITE_DOMAIN} {
+    @docs path /api/schema/* /api/docs/* /api/redoc/*
+    handle @docs {
+        basic_auth {
+            {$CADDY_USER:admin} {$CADDY_PASSWORD}
+        }
+        reverse_proxy django:8000
+    }
+
+    @api path /api/* /admin/*
+    handle @api {
+        reverse_proxy django:8000
+    }
+
+    # Serve Django static files
+    handle /static/* {
+        root * /static
+        file_server
+    }
+
+    # Serve media files
+    handle /media/* {
+        root * /media
+        file_server
+    }
+
     reverse_proxy /flower/* flower:5555
     reverse_proxy /* django:8000
 }

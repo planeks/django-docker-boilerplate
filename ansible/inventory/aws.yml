@@ -1,0 +1,17 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+  - us-west-2
+filters:
+  tag:Environment: "{{ deploy_env }}"
+  tag:Project: django-app
+  instance-state-name: running
+keyed_groups:
+  - key: tags.Environment
+    prefix: env
+  - key: placement.region
+    prefix: region
+hostnames:
+  - tag:Name
+compose:
+  ansible_host: public_ip_address

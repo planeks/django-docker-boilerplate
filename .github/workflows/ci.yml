@@ -1,16 +1,99 @@
-name: CI Tests
+name: CI
 
 on:
+  # Called by staging/production deploy workflows before deploying
   workflow_call: {}
-  push:
-    branches: [develop, staging, main]
   pull_request:
     branches: [develop, staging, main]
+    # Skip CI for changes that don't affect code quality or tests
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.gitignore'
+      - 'ansible/**'
+      - '.pre-commit-config.yaml'
+
+# Cancel in-progress runs on the same PR when a new push arrives,
+# so we don't burn Actions minutes on outdated commits
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  check_migration_conflicts:
+    name: Check Migration Conflicts
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - id: checkout_branch
+        name: Checkout Branch
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - id: get_added_migrations
+        name: Get Added Migrations
+        run: |
+          ADDED_MIGRATIONS=$(git diff --name-only --diff-filter=A origin/${{ github.event.pull_request.base.ref }}..origin/${{ github.head_ref }} | grep "/migrations/" | sed "s/src\///" | sed "s/migrations\///" | sed "s/\(.*\/.\{4\}\)\(.*\)/\1/")
+          echo "added_migrations<<EOF" >> $GITHUB_OUTPUT
+          echo "$ADDED_MIGRATIONS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - id: checkout_base_branch
+        name: Checkout Base Branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - id: compare_existing_migrations
+        name: Compare Existing Migrations
+        run: |
+          EXISTING_MIGRATIONS=$(find . -type f -regex '.*\/migrations\/.*' ! -regex '.*pycache.*' | sed "s/.\///" | sed "s/src\///" | sed "s/migrations\///" | sed "s/\(.*\/.\{4\}\)\(.*\)/\1/" | sort -u)
+          ADDED_MIGRATIONS="${{ steps.get_added_migrations.outputs.added_migrations }}"
+          ADDED_MIGRATIONS=$(echo "$ADDED_MIGRATIONS" | tr ' ' '\n' | sort -u)
+          MATCHES=$(diff -u <(echo "$ADDED_MIGRATIONS") <(echo "$EXISTING_MIGRATIONS") | grep '^ ' | wc -l)
+          exit $MATCHES
+
+  lint-backend:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        cache: pip
+
+    - name: Install tools
+      run: pip install ruff pip-audit poetry
+
+    - name: Ruff check
+      working-directory: ./src
+      run: ruff check .
+
+    - name: Ruff format check
+      working-directory: ./src
+      run: ruff format --check .
+
+    # Provides warnings for vulnerable dependencies, but doesn't fail the job, since we don't want to block PRs for that.
+    # We'll still get the warnings in the logs and can address them in a timely manner.
+    - name: Audit Python dependencies
+      continue-on-error: true
+      working-directory: ./src
+      run: poetry export -f requirements.txt --without-hashes -o /tmp/requirements.txt && pip-audit -r /tmp/requirements.txt
+
   test-backend:
     name: Test Django Backend
+    needs: [lint-backend, check_migration_conflicts]
+    if: ${{ github.base_ref != 'develop' && !failure() && !cancelled() }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
     - name: Checkout code

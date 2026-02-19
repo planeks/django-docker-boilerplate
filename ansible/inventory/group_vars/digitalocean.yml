@@ -1,0 +1,4 @@
+cloud_provider: digitalocean
+
+# GitHub Actions
+setup_github_actions: true

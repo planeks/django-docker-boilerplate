@@ -1,0 +1,36 @@
+---
+# Backup role - sets up weekly database backup cron job (production only)
+
+- name: Ensure backup directory exists
+  file:
+    path: "/home/{{ app_user }}/backups"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+- name: Copy backup script to server
+  copy:
+    src: "{{ playbook_dir }}/../../scripts/backup.sh"
+    dest: "/home/{{ app_user }}/backup.sh"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+- name: Setup weekly backup cron job
+  cron:
+    name: "Weekly database backup"
+    minute: "{{ backup_schedule_minute }}"
+    hour: "{{ backup_schedule_hour }}"
+    weekday: "{{ backup_schedule_day }}"
+    job: "/home/{{ app_user }}/backup.sh {{ backup_compose_file }} {{ app_dir }} {{ backup_retention_days }} >> /home/{{ app_user }}/backup.log 2>&1"
+    user: "{{ app_user }}"
+
+- name: Display backup configuration
+  debug:
+    msg: |
+      Backup configured:
+      - Script: /home/{{ app_user }}/backup.sh
+      - Schedule: Weekly on Sunday at {{ backup_schedule_hour }}:{{ backup_schedule_minute }}
+      - Retention: {{ backup_retention_days }} days
+      - Log: /home/{{ app_user }}/backup.log
