@@ -158,7 +158,7 @@ Open `.env` and fill in the values:
 
 ```shell
 PYTHONENCODING=utf8
-COMPOSE_IMAGES_PREFIX=newprojectname
+COMPOSE_PROJECT_NAME=myproject
 DEBUG=0
 CONFIGURATION=prod
 DJANGO_LOG_LEVEL=INFO
@@ -184,7 +184,7 @@ CADDY_PASSWORD=<here should be hash of a password>
 
 > Generate strong values for `SECRET_KEY` and all passwords.
 
-Set `ALLOWED_HOSTS` and `SITE_DOMAIN` to your actual domain. `COMPOSE_IMAGES_PREFIX` is a prefix for container images and can match your dev configuration.
+Set `ALLOWED_HOSTS` and `SITE_DOMAIN` to your actual domain. `COMPOSE_PROJECT_NAME` is used as a prefix for container images and can match your dev configuration.
 
 Build and start:
 
@@ -201,7 +201,7 @@ The project already contains these workflows:
 
 ```
 .github/workflows/
-├── ci.yml                    # CI tests for backend and frontend
+├── ci.yml                    # CI tests for backend
 ├── deploy-reusable.yml       # Reusable deployment workflow
 ├── dev_deploy.yml            # Development deployment
 ├── staging_deploy.yml        # Staging deployment
@@ -297,7 +297,7 @@ Or use Actions > Deploy to Development > Run workflow
 
 Trigger: push to `staging` branch
 
-1. Runs CI tests (backend and frontend)
+1. Runs CI tests (backend)
 2. Deploys to staging server using `compose.prod.yml`
 3. Runs database migrations and collects static files
 
@@ -311,7 +311,7 @@ Or use Actions > Deploy to Staging > Run workflow
 
 Trigger: push to `main` branch
 
-1. Runs CI tests (backend and frontend)
+1. Runs CI tests (backend)
 2. Requires environment approval
 3. Deploys to production server using `compose.prod.yml`
 4. Runs database migrations and collects static files
