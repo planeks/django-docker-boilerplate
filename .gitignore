@@ -11,7 +11,6 @@ __pycache__
 /data/*
 !/data/.gitkeep
 !/media/.gitkeep
-/scripts
 /tmp
 .coverage
 /.idea
@@ -23,3 +22,5 @@ __pycache__
 /upgrade_project.sh
 /ngrok
 .DS_Store
+ansible/.env.ansible
+/backups/*

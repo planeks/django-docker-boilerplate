@@ -1,0 +1,9 @@
+---
+# Node Exporter configuration
+node_exporter_version: "1.8.2"
+install_node_exporter: true
+
+# Promtail configuration
+promtail_version: "3.0.0"
+install_promtail: false
+# promtail_loki_url: "http://localhost:3100/loki/api/v1/push"  # Set this if using Promtail

@@ -1,0 +1,7 @@
+---
+# Default values for common role
+# These can be overridden by group_vars, host_vars, or extra_vars
+
+# Application user - the non-root user that owns the application files
+# This will be set from APP_USER environment variable or default to 'ubuntu'
+app_user: "{{ lookup('env', 'APP_USER') | default('ubuntu') }}"

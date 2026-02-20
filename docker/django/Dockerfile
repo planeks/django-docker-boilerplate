@@ -30,20 +30,20 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 # Create appuser
 RUN addgroup --gid 1024 appuser \
     && adduser --disabled-password --gecos "" --force-badname --ingroup appuser appuser
- \
-    # Set WORKDIR to the project directory
+
+# Set WORKDIR to the project directory
 WORKDIR /opt/project/src
 
 # Copy only pyproject.toml and poetry.lock first (for better caching)
 COPY --chown=appuser:appuser ./src/pyproject.toml ./src/poetry.lock /opt/project/src/
 
-# Copy the rest of the application code
-COPY --chown=appuser:appuser ./src /opt/project/src
-
-
 # Create project directory and set permissions
 RUN mkdir -p /opt/project/src
 RUN chown -R appuser:appuser /opt/project
+
+# Ensure .pytest_cache with correct permissions
+RUN mkdir -p /opt/project/src/.pytest_cache && \
+    chown -R appuser:appuser /opt/project/src/.pytest_cache
 
 # Switch to non-root user for Poetry operations
 USER appuser
@@ -71,6 +71,9 @@ RUN poetry run python -c "import psycopg2; print('psycopg2 installed successfull
 # Verify installation
 RUN poetry run pip list
 
+# Copy the rest of the application code
+COPY --chown=appuser:appuser ./src /opt/project/src
+
 # Switch back to root for copying files
 USER root
 
@@ -79,6 +82,10 @@ COPY --chown=appuser:appuser ./docker/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
+# Install gosu for step-down from root
+RUN apt-get update && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/* \
+    && gosu nobody true
 
 # Setup data directory
 RUN mkdir -p /data \
@@ -86,7 +93,11 @@ RUN mkdir -p /data \
     && chmod 775 /data \
     && chmod g+s /data
 
-# Switch back to non-root user
-USER appuser
+# This step is outside of entrypoint to avoid permission errors
+RUN mkdir -p /data/staticfiles \
+    && chown -R appuser:appuser /data/staticfiles \
+    && chmod 775 /data/staticfiles
+
+# Keep container as root, entrypoint will switch to appuser
 WORKDIR /opt/project/src
 ENTRYPOINT ["/entrypoint"]

@@ -1,0 +1,43 @@
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 5
+destemail = root@localhost
+sendername = Fail2Ban
+action = %(action_mwl)s
+
+[sshd]
+enabled = true
+port = ssh
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+
+[caddy-http-auth]
+enabled = true
+filter = caddy-http-auth
+port = http,https
+logpath = /var/log/caddy/access.log
+maxretry = 3
+
+[caddy-badbots]
+enabled = true
+filter = caddy-badbots
+port = http,https
+logpath = /var/log/caddy/access.log
+maxretry = 2
+
+[caddy-noscript]
+enabled = true
+filter = caddy-noscript
+port = http,https
+logpath = /var/log/caddy/access.log
+maxretry = 3
+
+[caddy-dos]
+enabled = true
+filter = caddy-dos
+port = http,https
+logpath = /var/log/caddy/access.log
+maxretry = 100
+findtime = 60
+bantime = 600

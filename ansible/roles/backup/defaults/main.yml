@@ -1,0 +1,13 @@
+---
+# Backup role defaults
+
+# Retention period in days
+backup_retention_days: 30
+
+# Cron schedule - Weekly on Sunday at 2 AM
+backup_schedule_day: "0"      # 0 = Sunday
+backup_schedule_hour: "2"
+backup_schedule_minute: "0"
+
+# Compose file to use for backup
+backup_compose_file: compose.prod.yml
