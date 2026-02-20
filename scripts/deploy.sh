@@ -80,7 +80,8 @@ log_info "Validating environment configuration..."
 # Function to check if a value is a placeholder
 is_placeholder() {
     local value="$1"
-    [[ -z "$value" ]] || [[ "$value" =~ ^<.*>$ ]] || [[ "$value" == "secret_key" ]]
+    local pattern="^<.*>$"
+    [[ -z "$value" ]] || [[ "$value" =~ $pattern ]] || [[ "$value" == "secret_key" ]]
 }
 
 # Load .env file
