@@ -29,6 +29,52 @@ ssh -i <your-key> <user>@<server_ip> "cd ~/projects/django_app && ./scripts/back
 docker compose -f compose.prod.yml exec -T postgres backups
 ```
 
+### Media backups
+
+Media backup is disabled by default. There are two ways to enable it:
+
+**Before provisioning** -- set in your Ansible inventory:
+
+```yaml
+backup_media_enabled: true
+```
+
+**After provisioning** -- create the directory and edit the crontab on the server:
+
+```bash
+mkdir -p ~/backups/media
+crontab -e
+```
+
+Append `--media ~/backups/media` to the existing backup command:
+
+```
+0 2 * * 0 /home/ubuntu/backup.sh compose.prod.yml /home/ubuntu/projects/django_app 30 --media /home/ubuntu/backups/media >> /home/ubuntu/backup.log 2>&1
+```
+
+When enabled, the weekly cron job will also:
+
+- Create a compressed archive of `/data/media/` from the django container
+- Store it at `~/backups/media/media_<timestamp>.tar.gz` on the host
+- Clean up media archives older than `backup_retention_days`
+
+#### Manual media backup
+
+```bash
+cd ~/projects/django_app
+docker compose -f compose.prod.yml run --rm \
+  -v ~/backups/media:/host-backups \
+  django tar czf /host-backups/media_$(date +'%Y_%m_%dT%H_%M_%S').tar.gz -C /data media/
+```
+
+#### Restore media from backup
+
+```bash
+docker compose -f compose.prod.yml run --rm \
+  -v ~/backups/media:/host-backups \
+  django tar xzf /host-backups/media_2026_02_24T02_00_00.tar.gz -C /data
+```
+
 ## Restore from backup
 
 Stop the app containers that use the database:

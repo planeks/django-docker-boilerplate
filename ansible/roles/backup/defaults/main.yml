@@ -9,5 +9,8 @@ backup_schedule_day: "0"      # 0 = Sunday
 backup_schedule_hour: "2"
 backup_schedule_minute: "0"
 
+# Media backup (disabled by default, enable per-project)
+backup_media_enabled: false
+
 # Compose file to use for backup
 backup_compose_file: compose.prod.yml
