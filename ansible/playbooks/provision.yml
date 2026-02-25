@@ -1,0 +1,119 @@
+---
+# Server provisioning playbook
+# Sets up complete server infrastructure
+# Split into two plays so that the SSH connection is reset after Docker install,
+# ensuring the app user's docker group membership is active for deployment.
+
+- name: Provision Django servers - system setup
+  hosts: all
+  become: yes
+
+  pre_tasks:
+    - name: Set environment facts
+      set_fact:
+        deploy_env: "{{ deploy_env | default('production') }}"
+
+    - name: Display provisioning information
+      debug:
+        msg: |
+          === Server Provisioning ===
+          Server: {{ inventory_hostname }}
+          Env: {{ deploy_env }}
+          Provider: {{ cloud_provider | default('generic') }}
+          =========================
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+      when:
+        - ansible_os_family == "Debian"
+
+  roles:
+    - role: common
+      tags: [common, security]
+
+    - role: docker
+      tags: [docker]
+
+- name: Provision Django servers - application setup
+  hosts: all
+  become: yes
+
+  pre_tasks:
+    - name: Set environment facts
+      set_fact:
+        deploy_env: "{{ deploy_env | default('production') }}"
+
+  roles:
+    - role: monitoring
+      tags: [monitoring]
+      when: enable_monitoring | default(true)
+
+    - role: github_actions
+      tags: [github, deployment, ci]
+      when: setup_github_actions | default(true)
+
+    - role: backup
+      tags: [backup, cron]
+      when: deploy_env == 'production'
+
+  post_tasks:
+    - name: Create data directories for Docker volumes
+      file:
+        path: "{{ app_dir | default('/home/' + app_user + '/projects/django_app') }}/data/{{ item }}"
+        state: directory
+        owner: "{{ app_user | default('appuser') }}"
+        group: django
+        mode: '0775'
+      loop:
+        - dev
+        - prod
+      tags: [app-setup]
+
+    - name: Set SGID bit on data directories
+      file:
+        path: "{{ app_dir | default('/home/' + app_user + '/projects/django_app') }}/data/{{ item }}"
+        state: directory
+        mode: g+s
+      loop:
+        - dev
+        - prod
+      tags: [app-setup]
+
+    - name: Verify Docker is running
+      systemd:
+        name: docker
+        state: started
+      register: docker_status
+
+    - name: Check if reboot is required
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: Display provisioning summary
+      debug:
+        msg: |
+          === Provisioning Complete ===
+          Env: {{ deploy_env }} | Host: {{ inventory_hostname }}
+          Docker: {{ 'Running' if docker_status.status.ActiveState == 'active' else 'Not Running' }}
+          Firewall: Enabled | SSL: {{ 'Yes' if domain_name is defined else 'No' }}
+          Monitoring: {{ 'Yes' if enable_monitoring | default(true) else 'No' }}
+          Reboot: {{ 'Required' if reboot_required.stat.exists else 'Not needed' }}
+
+          Next: Configure GitHub Secrets & push to deploy
+          ==============================
+
+    - name: Reboot server if required and authorized
+      reboot:
+        msg: "Rebooting to apply updates"
+        reboot_timeout: 300
+      when:
+        - reboot_required.stat.exists
+        - auto_reboot | default(false)

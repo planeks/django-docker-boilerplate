@@ -1,0 +1,85 @@
+# ============================================================================
+# Ansible Connection Configuration
+# ============================================================================
+# SSH connection user - the user Ansible connects as
+# Common values: 'root', 'ubuntu' (AWS EC2), 'admin' (GCP), 'core' (CoreOS)
+ansible_user: "{{ lookup('env', 'ANSIBLE_REMOTE_USER') | default('ubuntu') }}"
+ansible_python_interpreter: /usr/bin/python3
+
+# ============================================================================
+# Project Configuration
+# ============================================================================
+project_name: "{{ lookup('env', 'PROJECT_NAME') | default('django_app') }}"
+
+# Application user - the non-root user that owns the application files
+# This can be the same as ansible_user (e.g., 'ubuntu' on AWS) or different (e.g., 'appuser')
+# Set APP_USER environment variable to override
+app_user: "{{ lookup('env', 'APP_USER') | default('ubuntu') }}"
+app_dir: /home/{{ app_user }}/projects/{{ project_name }}
+
+# ============================================================================
+# Domain and SSL Configuration
+# Set DOMAIN_NAME environment variable before provisioning
+# ============================================================================
+domain_name: "{{ lookup('env', 'DOMAIN_NAME') }}"
+
+# ============================================================================
+# Database Configuration
+# Set DB_PASSWORD environment variable before provisioning
+# ============================================================================
+db_name: db
+db_user: dbuser
+db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+
+# ============================================================================
+# Git Repository Configuration
+# Auto-detects from current git repository or uses GIT_REPO_URL env variable
+# Converts local git URL to GitHub SSH format automatically
+# ============================================================================
+git_repo_url: "{{ lookup('env', 'GIT_REPO_URL') | default(lookup('pipe', 'git remote get-url origin 2>/dev/null | sed -E \"s#.*/git/([^/]+/[^/]+).*#git@github.com:\\1.git#\" || echo \"\"', errors='ignore') | default('', true), true) }}"
+git_branch: "{{ lookup('env', 'GIT_BRANCH') | default(lookup('pipe', 'git rev-parse --abbrev-ref HEAD 2>/dev/null || echo \"main\"', errors='ignore') | default('main', true), true) }}"
+
+# Deploy Key Generation
+# Set to true to generate SSH key for git repository access (for private repos)
+# The public key will be displayed - add it to your repository's deploy keys
+generate_deploy_key: true
+
+# ============================================================================
+# Monitoring Configuration
+# Node Exporter: System metrics (CPU, memory, disk)
+# Promtail: Log shipping to Loki (optional, requires Loki server)
+# ============================================================================
+enable_monitoring: true
+node_exporter_version: "1.8.2"
+promtail_version: "3.0.0"
+install_node_exporter: true
+install_promtail: false  # Set to true if you have a Loki server
+# promtail_loki_url: http://loki-server:3100/loki/api/v1/push  # Uncomment and set if using Promtail
+
+# ============================================================================
+# Backup Configuration
+# ============================================================================
+backup_retention_days: 30
+
+# ============================================================================
+# Application Secrets (Optional - can be set via environment variables)
+# If not set, .env file will contain placeholders that need manual update
+# ============================================================================
+django_secret_key: "{{ lookup('env', 'DJANGO_SECRET_KEY') | default('') }}"
+
+# ============================================================================
+# GitHub Actions Integration
+# Set GITHUB_ACTIONS_SSH_KEY environment variable with the public key
+# This enables automated deployments from GitHub Actions
+# ============================================================================
+setup_github_actions: true
+create_env_template: true
+# github_actions_ssh_key: Set via GITHUB_ACTIONS_SSH_KEY environment variable
+
+# ============================================================================
+# Deployment Options
+# ============================================================================
+deploy_app: false  # Set to true to deploy app during provisioning (requires git_repo_url)
+auto_reboot: false  # Automatically reboot after kernel updates (use with caution)
+
+

@@ -1,5 +1,3 @@
-version: '3.8'
-
 x-django: &django
   build:
     context: .
@@ -7,7 +5,7 @@ x-django: &django
     args:
       ENVIRONMENT: production  # Add build argument
   restart: always
-  image: "${COMPOSE_IMAGES_PREFIX}_prod"
+  image: "${COMPOSE_PROJECT_NAME}_prod"
   depends_on:
     - postgres
   volumes:
@@ -43,7 +41,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/postgres/Dockerfile
-    image: "${COMPOSE_IMAGES_PREFIX}_prod_postgres"
+    image: "${COMPOSE_PROJECT_NAME}_prod_postgres"
     restart: always
     volumes:
       - prod_postgres:/var/lib/postgresql/data:Z
@@ -54,7 +52,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/caddy/Dockerfile
-    image: "${COMPOSE_IMAGES_PREFIX}_prod_caddy"
+    image: "${COMPOSE_PROJECT_NAME}_prod_caddy"
     restart: unless-stopped
     ports:
       - "0.0.0.0:80:80"
@@ -62,7 +60,7 @@ services:
     volumes:
       - prod_caddy:/data
       - static:/static:ro
-      - media:/media
+      - media:/media:ro
       - caddy_config:/config
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
     env_file:

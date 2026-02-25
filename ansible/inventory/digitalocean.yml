@@ -1,0 +1,15 @@
+plugin: community.digitalocean.digitalocean
+attributes:
+  - id
+  - name
+  - networks
+  - region
+  - size
+  - tags
+keyed_groups:
+  - key: tags
+    prefix: tag
+  - key: region.slug
+    prefix: region
+compose:
+  ansible_host: networks.v4[0].ip_address

@@ -1,0 +1,157 @@
+---
+# Create monitoring user
+- name: Create monitoring user
+  user:
+    name: monitoring
+    system: yes
+    create_home: no
+    shell: /bin/false
+
+# Install Node Exporter for metrics
+- name: Install Node Exporter
+  block:
+    - name: Download Node Exporter
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: /tmp/node_exporter.tar.gz
+        mode: '0644'
+        timeout: 300
+
+    - name: Extract Node Exporter
+      unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Copy Node Exporter binary
+      copy:
+        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+        dest: /usr/local/bin/node_exporter
+        mode: '0755'
+        remote_src: yes
+
+    - name: Create Node Exporter systemd service
+      copy:
+        content: |
+          [Unit]
+          Description=Node Exporter
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=monitoring
+          Group=monitoring
+          Type=simple
+          ExecStart=/usr/local/bin/node_exporter
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/node_exporter.service
+
+    - name: Start and enable Node Exporter
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+        daemon_reload: yes
+  when: install_node_exporter | default(true)
+
+# Install Promtail for log aggregation
+- name: Install Promtail
+  block:
+    - name: Download Promtail
+      get_url:
+        url: "https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-linux-amd64.zip"
+        dest: /tmp/promtail.zip
+        mode: '0644'
+
+    - name: Install unzip
+      apt:
+        name: unzip
+        state: present
+
+    - name: Extract Promtail
+      unarchive:
+        src: /tmp/promtail.zip
+        dest: /tmp/
+        remote_src: yes
+
+    - name: Copy Promtail binary
+      copy:
+        src: /tmp/promtail-linux-amd64
+        dest: /usr/local/bin/promtail
+        mode: '0755'
+        remote_src: yes
+
+    - name: Create Promtail config directory
+      file:
+        path: /etc/promtail
+        state: directory
+        mode: '0755'
+
+    - name: Create Promtail configuration
+      copy:
+        content: |
+          server:
+            http_listen_port: 9080
+            grpc_listen_port: 0
+
+          positions:
+            filename: /tmp/positions.yaml
+
+          clients:
+            - url: {{ promtail_loki_url | default('http://localhost:3100/loki/api/v1/push') }}
+
+          scrape_configs:
+            - job_name: system
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: varlogs
+                    host: {{ ansible_hostname }}
+                    __path__: /var/log/*log
+
+            - job_name: journal
+              journal:
+                max_age: 12h
+                labels:
+                  job: systemd-journal
+                  host: {{ ansible_hostname }}
+              relabel_configs:
+                - source_labels: ['__journal__systemd_unit']
+                  target_label: 'unit'
+        dest: /etc/promtail/config.yml
+
+    - name: Create Promtail systemd service
+      copy:
+        content: |
+          [Unit]
+          Description=Promtail service
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=root
+          ExecStart=/usr/local/bin/promtail -config.file=/etc/promtail/config.yml
+          Restart=on-failure
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/promtail.service
+
+    - name: Start and enable Promtail
+      systemd:
+        name: promtail
+        state: started
+        enabled: yes
+        daemon_reload: yes
+  when: install_promtail | default(false) and promtail_loki_url is defined
+
+- name: Create monitoring directory
+  file:
+    path: /var/lib/monitoring
+    state: directory
+    owner: monitoring
+    group: monitoring
+    mode: '0755'

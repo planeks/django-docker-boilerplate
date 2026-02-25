@@ -1,0 +1,262 @@
+---
+# Configure GitHub Actions deployment
+- name: Configure GitHub Actions
+  block:
+    - name: Set essential variables
+      set_fact:
+        app_user: "{{ app_user | default(lookup('env', 'APP_USER') | default(ansible_user | default('ubuntu'))) }}"
+        project_name: "{{ project_name | default('django_app') }}"
+
+    - name: Set app_dir
+      set_fact:
+        app_dir: "{{ app_dir | default('/home/' + app_user + '/projects/' + project_name) }}"
+
+    - name: Get GitHub Actions SSH key
+      set_fact:
+        github_actions_ssh_key_raw: "{{ github_actions_ssh_key | default(lookup('env', 'GITHUB_ACTIONS_SSH_KEY')) }}"
+
+    - name: Clean SSH key
+      set_fact:
+        github_actions_ssh_key: "{{ github_actions_ssh_key_raw | default('') | trim }}"
+
+    - name: Validate SSH key exists
+      fail:
+        msg: |
+          WARNING: GitHub Actions SSH Key Required
+
+          Generate: ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions -N ""
+          Add PUBLIC key to .env.ansible: GITHUB_ACTIONS_SSH_KEY="ssh-ed25519 AAAA..."
+      when: github_actions_ssh_key is not defined or github_actions_ssh_key | length == 0
+
+    - name: Validate SSH key format
+      fail:
+        msg: |
+          WARNING: Invalid SSH Key Format
+          Got: {{ github_actions_ssh_key[:50] }}... ({{ github_actions_ssh_key | length }} chars)
+          Expected: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... comment
+      when: >
+        github_actions_ssh_key.split() | length < 2 or
+        not github_actions_ssh_key.startswith('ssh-')
+
+    - name: Add GitHub Actions SSH public key to app user authorized_keys
+      authorized_key:
+        user: "{{ app_user }}"
+        key: "{{ github_actions_ssh_key }}"
+        state: present
+        comment: "GitHub Actions deployment key"
+
+    - name: Add GitHub Actions SSH public key to ansible user authorized_keys
+      authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ github_actions_ssh_key }}"
+        state: present
+        comment: "GitHub Actions deployment key"
+
+    - name: Ensure application directory exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+
+    # Auto-deploy application (optional)
+    - name: Check if git repository exists
+      stat:
+        path: "{{ app_dir }}/.git"
+      register: git_repo_check
+      when: deploy_app | default(false) | bool
+
+    - name: Clone application repository
+      git:
+        repo: "{{ git_repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ git_branch }}"
+        accept_hostkey: yes
+      become: yes
+      become_user: "{{ app_user }}"
+      when:
+        - deploy_app | default(false) | bool
+        - not git_repo_check.stat.exists
+        - git_repo_url is defined
+        - git_repo_url | length > 0
+
+    - name: Update repository to latest version
+      git:
+        repo: "{{ git_repo_url }}"
+        dest: "{{ app_dir }}"
+        version: "{{ git_branch }}"
+        update: yes
+        force: yes
+      become: yes
+      become_user: "{{ app_user }}"
+      when:
+        - deploy_app | default(false) | bool
+        - git_repo_check.stat.exists
+        - git_repo_url is defined
+        - git_repo_url | length > 0
+
+    # Environment configuration
+    - name: Determine environment template file
+      set_fact:
+        env_template_file: "{{ 'dev.env' if deploy_env == 'dev' or deploy_env == 'development' else 'prod.env' }}"
+
+    - name: Copy environment template to server
+      copy:
+        src: "{{ playbook_dir }}/../../{{ env_template_file }}"
+        dest: "{{ app_dir }}/.env.template"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      when: create_env_template | default(true)
+
+    - name: Inject Django secret key
+      lineinfile:
+        path: "{{ app_dir }}/.env.template"
+        regexp: '^SECRET_KEY='
+        line: 'SECRET_KEY="{{ django_secret_key }}"'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      when:
+        - create_env_template | default(true)
+        - django_secret_key is defined
+        - django_secret_key | length > 0
+
+    - name: Inject database password
+      lineinfile:
+        path: "{{ app_dir }}/.env.template"
+        regexp: '^POSTGRES_PASSWORD='
+        line: 'POSTGRES_PASSWORD="{{ db_password }}"'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      when:
+        - create_env_template | default(true)
+        - db_password is defined
+        - db_password | length > 0
+
+    - name: Inject database name
+      lineinfile:
+        path: "{{ app_dir }}/.env.template"
+        regexp: '^POSTGRES_DB='
+        line: 'POSTGRES_DB={{ db_name }}'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      when:
+        - create_env_template | default(true)
+        - db_name is defined
+        - db_name | length > 0
+
+    - name: Inject database user
+      lineinfile:
+        path: "{{ app_dir }}/.env.template"
+        regexp: '^POSTGRES_USER='
+        line: 'POSTGRES_USER={{ db_user }}'
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      when:
+        - create_env_template | default(true)
+        - db_user is defined
+        - db_user | length > 0
+
+    - name: Inject domain configuration
+      lineinfile:
+        path: "{{ app_dir }}/.env.template"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0644'
+      loop:
+        - { regexp: '^ALLOWED_HOSTS=', line: 'ALLOWED_HOSTS={{ domain_name }}' }
+        - { regexp: '^SITE_DOMAIN=', line: 'SITE_DOMAIN={{ domain_name }}' }
+        - { regexp: '^SITE_URL=', line: 'SITE_URL={{ "https" if deploy_env == "production" else "http" }}://{{ domain_name }}' }
+      when:
+        - create_env_template | default(true)
+        - domain_name is defined
+        - domain_name | length > 0
+
+    - name: Check if .env file exists
+      stat:
+        path: "{{ app_dir }}/.env"
+      register: env_file_check
+
+    - name: Create .env file from template if it doesn't exist
+      copy:
+        src: "{{ app_dir }}/.env.template"
+        dest: "{{ app_dir }}/.env"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0600'
+        remote_src: yes
+      when:
+        - not env_file_check.stat.exists
+        - create_env_template | default(true)
+
+    - name: Set compose file based on environment
+      set_fact:
+        compose_file: "{{ 'compose.dev.yml' if deploy_env == 'dev' or deploy_env == 'development' else 'compose.prod.yml' }}"
+      when: deploy_app | default(false) | bool
+
+    - name: Make deploy script executable
+      file:
+        path: "{{ app_dir }}/scripts/deploy.sh"
+        mode: '0755'
+      become: yes
+      become_user: "{{ app_user }}"
+      when:
+        - deploy_app | default(false) | bool
+        - git_repo_url is defined
+        - git_repo_url | length > 0
+
+    - name: Run initial deployment
+      shell: |
+        cd {{ app_dir }}
+        ./scripts/deploy.sh {{ compose_file }} {{ git_branch }} {{ app_dir }}
+      become: yes
+      become_user: "{{ app_user }}"
+      environment:
+        PATH: "/usr/local/bin:/usr/bin:/bin"
+        ENVIRONMENT: "{{ deploy_env | default('production') }}"
+      when:
+        - deploy_app | default(false) | bool
+        - git_repo_url is defined
+        - git_repo_url | length > 0
+      register: deploy_result
+      ignore_errors: yes
+
+    - name: Display deployment result
+      debug:
+        msg: |
+          {% if deploy_result.rc == 0 %}
+          ✅ App deployed: http://{{ inventory_hostname }}
+          {% else %}
+          ⚠️  Deployment failed: {{ deploy_result.stderr | default('Unknown') }}
+          Retry: ssh {{ app_user }}@{{ inventory_hostname }} 'cd {{ app_dir }} && ./scripts/deploy.sh {{ compose_file }} {{ git_branch }} {{ app_dir }}'
+          {% endif %}
+      when:
+        - deploy_app | default(false) | bool
+        - deploy_result is defined
+        - deploy_result.rc is defined
+
+    # Setup complete
+    - name: Display GitHub Actions setup
+      debug:
+        msg: |
+          === ✅ GitHub Actions Setup Complete ===
+          Host: {{ inventory_hostname }} | User: {{ app_user }} | Dir: {{ app_dir }}
+
+          GitHub Secrets (Settings > Secrets > Actions):
+          - PROD_HOST = {{ inventory_hostname }}
+          - PROD_SSH_KEY = (private key)
+
+          {% if deploy_app | default(false) | bool %}
+          App: {{ git_repo_url | default('N/A') }} ({{ git_branch | default('main') }})
+          Status: {% if deploy_result is defined and deploy_result.rc is defined and deploy_result.rc == 0 %}✅ Deployed{% elif deploy_result is defined and deploy_result.rc is defined %}⚠️ Failed{% else %}⚠️ Skipped{% endif %}
+          {% else %}
+          Next: Configure .env & push to deploy
+          {% endif %}
+          ======================================

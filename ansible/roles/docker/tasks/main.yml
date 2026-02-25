@@ -1,0 +1,51 @@
+---
+- name: Install Docker dependencies
+  apt:
+    name: [apt-transport-https, ca-certificates, gnupg, lsb-release]
+    state: present
+
+- name: Create keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download Docker GPG key
+  get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Install Docker
+  apt:
+    name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+    state: present
+
+- name: Configure Docker daemon with journald logging
+  copy:
+    content: |
+      {
+        "log-driver": "journald",
+        "log-opts": {
+          "tag": "{{ '{{' }}.Name{{ '}}' }}"
+        }
+      }
+    dest: /etc/docker/daemon.json
+  notify: restart docker
+
+- name: Add app user to docker group
+  user:
+    name: "{{ app_user }}"
+    groups: docker
+    append: yes
+
+- name: Ensure Docker is started and enabled
+  systemd:
+    name: docker
+    state: started
+    enabled: yes

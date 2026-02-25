@@ -4,14 +4,14 @@ x-django: &django
     dockerfile: ./docker/django/Dockerfile
     args:
       ENVIRONMENT: development  # Pass the build argument
-#  image:  "${COMPOSE_PROJECT_NAME}_dev"
+  image:  "${COMPOSE_PROJECT_NAME}_dev"
   depends_on:
     - postgres
     - redis
     - mailhog
   volumes:
     - ./src:/opt/project/src:cached
-    - venv_data:/opt/project/src/.venv
+    - /opt/project/src/.venv
     - ./data/dev:/data:z
   env_file:
     - ./.env
@@ -92,4 +92,3 @@ services:
 volumes:
   dev_redis:
   dev_caddy:
-  venv_data:

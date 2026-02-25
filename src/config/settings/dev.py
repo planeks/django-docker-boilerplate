@@ -6,7 +6,7 @@ MIDDLEWARE += [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda x: True,
+    "SHOW_TOOLBAR_CALLBACK": lambda _: True,
 }
 
 INSTALLED_APPS += [

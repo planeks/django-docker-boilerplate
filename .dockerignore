@@ -23,3 +23,19 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 README.md
+
+# Exclude static files from build context
+# These are either collected at runtime or mounted as volumes in dev mode
+**/static/vendor
+**/.pytest_cache
+**/staticfiles
+
+# Exclude virtual environments and caches
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.coverage
+**/.mypy_cache
+**/.ruff_cache

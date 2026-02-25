@@ -1,7 +1,13 @@
 nav:
 
 - 'Home': 'index.md'
-- 'Database' : 'db_schema.md'
+- 'Database': 'db_schema.md'
+- 'Deployment (automated)': 'deployment_automated.md'
+- 'Deployment (manual)': 'deployment_manual.md'
+- 'GitHub Actions': 'github-actions-setup.md'
+- 'SSH key setup': 'ssh-key-setup.md'
+- 'Backups': 'backup.md'
+- 'Code quality': 'code-quality.md'
 - 'App': app
-- 'Development plan' : development_plan
-- 'External services' : external_services
+- 'Development plan': development_plan
+- 'External services': external_services

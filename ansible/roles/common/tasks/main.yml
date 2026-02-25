@@ -1,0 +1,181 @@
+---
+# Remove nginx (conflicts with Caddy on port 80/443)
+- name: Remove nginx if installed
+  block:
+    - name: Stop nginx service
+      systemd:
+        name: nginx
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Remove nginx packages
+      apt:
+        name: [nginx, nginx-common, nginx-core]
+        state: absent
+        purge: yes
+        autoremove: yes
+      ignore_errors: yes
+
+    - name: Remove nginx directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop: [/etc/nginx, /var/log/nginx, /var/www/html]
+      ignore_errors: yes
+
+- name: Install essential packages
+  apt:
+    name:
+      - curl
+      - git
+      - wget
+      - tmux
+      - htop
+      - mc
+      - nano
+      - build-essential
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+    state: present
+
+- name: Configure SSH hardening
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^PasswordAuthentication', line: 'PasswordAuthentication no' }
+    - { regexp: '^X11Forwarding', line: 'X11Forwarding no' }
+  notify: restart sshd
+
+- name: Configure UFW firewall
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop:
+    - { rule: 'allow', port: '22', proto: 'tcp' }
+    - { rule: 'allow', port: '80', proto: 'tcp' }
+    - { rule: 'allow', port: '443', proto: 'tcp' }
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+
+- name: Configure fail2ban
+  copy:
+    src: jail.local
+    dest: /etc/fail2ban/jail.local
+  notify: restart fail2ban
+
+- name: Create Caddy log directory
+  file:
+    path: /var/log/caddy
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Copy Caddy fail2ban filters
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/fail2ban/filter.d/{{ item }}"
+    mode: '0644'
+  loop:
+    - caddy-http-auth.conf
+    - caddy-badbots.conf
+    - caddy-noscript.conf
+    - caddy-dos.conf
+  notify: restart fail2ban
+
+- name: Create application user if it doesn't exist
+  user:
+    name: "{{ app_user }}"
+    shell: /bin/bash
+    create_home: yes
+    state: present
+  when:
+    - app_user is defined
+    - ansible_user is defined
+    - app_user != ansible_user
+
+- name: Create projects directory
+  file:
+    path: "/home/{{ app_user }}/projects"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+- name: Create backups directory
+  file:
+    path: "/home/{{ app_user }}/backups"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+- name: Add django group (GID 1024) for Docker volumes
+  group:
+    name: django
+    gid: 1024
+    state: present
+
+- name: Add app user to django group
+  user:
+    name: "{{ app_user }}"
+    groups: django
+    append: yes
+
+# Generate SSH deploy key for git
+- name: Generate SSH deploy key
+  block:
+    - name: Check if SSH key exists
+      stat:
+        path: "/home/{{ app_user }}/.ssh/id_rsa"
+      register: ssh_key_check
+
+    - name: Ensure .ssh directory exists
+      file:
+        path: "/home/{{ app_user }}/.ssh"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0700'
+      when: not ssh_key_check.stat.exists
+
+    - name: Generate SSH key pair
+      openssh_keypair:
+        path: "/home/{{ app_user }}/.ssh/id_rsa"
+        type: rsa
+        size: 4096
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0600'
+        comment: "Deploy key for {{ ansible_hostname }}"
+      when: not ssh_key_check.stat.exists
+
+    - name: Read public key
+      slurp:
+        src: "/home/{{ app_user }}/.ssh/id_rsa.pub"
+      register: deploy_public_key
+      when: generate_deploy_key | default(true)
+
+    - name: Display deploy key
+      debug:
+        msg: |
+          === SSH Deploy Key ===
+          Path: /home/{{ app_user }}/.ssh/id_rsa.pub
+
+          {{ deploy_public_key.content | b64decode }}
+
+          Add to Git repo: Settings → Deploy keys
+          ======================
+      when:
+        - generate_deploy_key | default(true)
+        - deploy_public_key is defined
+  when: generate_deploy_key | default(true)
+  tags: [git, deploy_key]
