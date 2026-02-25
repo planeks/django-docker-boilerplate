@@ -43,7 +43,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Deploy via SSH with automated backup and rollback
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.host }}
           username: ${{ secrets.username || 'appuser' }}
