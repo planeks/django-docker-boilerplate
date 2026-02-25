@@ -53,7 +53,7 @@ mkdocs = "^1.5.3"
 mkdocs-awesome-pages-plugin = "^2.9.2"
 mkdocs-graphviz = "^1.5.3"
 mkdocs-material = "^9.5.6"
-mkdocstrings = {extras = ["python"], version = "^0.24.0"}
+mkdocstrings = {extras = ["python"], version = "^0.28.2"}
 mkdocstrings-python = "^1.9.0"
 griffe = "^0.40.0"
 pydot = "^3.0.0"
