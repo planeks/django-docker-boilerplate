@@ -7,7 +7,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-django = "==5.1.*"
+django = "==5.2.*"
 docutils = "^0.21.2"
 celery = "^5.4.0"
 celery-redbeat = "^2.2.0"
