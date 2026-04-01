@@ -6,7 +6,24 @@
     }
 }
 
+# Default security headers. Django can override per-response.
+# "header ?" sets the value only if not already present in the upstream response.
+(security_headers) {
+    header {
+        ?X-Content-Type-Options nosniff
+        ?X-Frame-Options DENY
+        ?X-XSS-Protection "1; mode=block"
+        ?Referrer-Policy strict-origin-when-cross-origin
+        ?Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+        -Server
+    }
+}
+
 {$SITE_DOMAIN} {
+    import security_headers
+    encode zstd gzip
+
     @docs path /api/schema/* /api/docs/* /api/redoc/*
     handle @docs {
         basic_auth {
@@ -20,14 +37,16 @@
         reverse_proxy django:8000
     }
 
-    # Serve Django static files
+    # Django static files, cache but revalidate on each request via ETag
     handle /static/* {
+        header Cache-Control "public, no-cache"
         root * /static
         file_server
     }
 
-    # Serve media files
+    # Django media files
     handle /media/* {
+        header Cache-Control "public, max-age=604800"
         root * /media
         file_server
     }
@@ -36,6 +55,6 @@
     reverse_proxy /* django:8000
 }
 
-# www.{$SITE_DOMAIN} {
-#    redir https://{$SITE_DOMAIN}{uri}
-# }
+www.{$SITE_DOMAIN} {
+    redir https://{$SITE_DOMAIN}{uri}
+}
