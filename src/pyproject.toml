@@ -42,7 +42,7 @@ django-debug-toolbar = "^4.2"
 freezegun = "^1.4"
 markdown-urlize = "^0.2"
 pytest = "^7.4"
-ruff = "^0.6.7"
+ruff = "^0.15.2"
 
 [build-system]
 requires = ["poetry-core"]
